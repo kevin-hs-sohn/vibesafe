@@ -6,6 +6,8 @@ Claude Code Security Guard - A hook plugin that intercepts permission requests a
 
 Maintain flow without `--dangerously-skip-permissions` while automatically blocking when the LLM is prompt-injected or attempts to execute malicious code.
 
+![VibeSafe Demo](vibesafu-demo.png)
+
 ## Quick Start
 
 ### Option A: Install from npm
