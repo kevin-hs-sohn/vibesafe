@@ -1,4 +1,4 @@
-# VibeSafe
+# VibeSafu
 
 Claude Code Security Guard - A hook plugin that intercepts permission requests and performs security checks.
 
@@ -6,7 +6,7 @@ Claude Code Security Guard - A hook plugin that intercepts permission requests a
 
 Maintain flow without `--dangerously-skip-permissions` while automatically blocking when the LLM is prompt-injected or attempts to execute malicious code.
 
-![VibeSafe Demo](vibesafu-demo.png)
+![VibeSafu Demo](vibesafu-demo.png)
 
 ## Quick Start
 
@@ -54,7 +54,7 @@ vibesafu config
    # If using VS Code extension, restart the extension
    ```
 
-2. **That's it!** VibeSafe now automatically protects your Claude Code sessions.
+2. **That's it!** VibeSafu now automatically protects your Claude Code sessions.
 
 ### What You Get
 
@@ -68,13 +68,13 @@ With an API key (recommended):
 
 ## How It Works
 
-When you run `claude` (or use the VS Code extension), VibeSafe intercepts every Bash command before execution:
+When you run `claude` (or use the VS Code extension), VibeSafu intercepts every Bash command before execution:
 
 ```
 You: "Install lodash"
 Claude: Wants to run `npm install lodash`
          ↓
-    [VibeSafe Hook]
+    [VibeSafu Hook]
          ↓
     ✓ Safe command → Executes automatically
     ✗ Dangerous → Blocks with explanation
@@ -222,7 +222,7 @@ pnpm verify
 
 ### Do I need an Anthropic API key?
 
-No, but recommended. Without it, VibeSafe still provides:
+No, but recommended. Without it, VibeSafu still provides:
 - Pattern-based instant blocking (reverse shells, data exfil, etc.)
 - Trusted domain whitelist
 
@@ -240,7 +240,7 @@ Minimal impact:
 
 Most commands are handled by pattern matching or trusted domain checks without LLM calls.
 
-### What if VibeSafe blocks a legitimate command?
+### What if VibeSafu blocks a legitimate command?
 
 1. Review why it was blocked (shown in the message)
 2. If it's a false positive, you can:
@@ -250,7 +250,7 @@ Most commands are handled by pattern matching or trusted domain checks without L
 
 ### Can I use this with VS Code Claude extension?
 
-Yes! VibeSafe hooks into Claude Code's settings, which works with both:
+Yes! VibeSafu hooks into Claude Code's settings, which works with both:
 - CLI (`claude` command)
 - VS Code extension
 
