@@ -182,38 +182,137 @@ describe('Hook Handler', () => {
   });
 
   // ==========================================================================
-  // Non-Bash Tools
+  // Non-Bash Tools - File Security
   // ==========================================================================
-  describe('Non-Bash Tools', () => {
-    it('should handle Read tool', async () => {
-      const input: PermissionRequestInput = {
-        session_id: 'test-session',
-        transcript_path: '/tmp/transcript',
-        cwd: '/tmp/project',
-        permission_mode: 'default',
-        hook_event_name: 'PermissionRequest',
-        tool_name: 'Read',
-        tool_input: { file_path: '/etc/passwd' },
-      };
-      const result = await processPermissionRequest(input);
+  describe('File Tools Security', () => {
+    describe('Write Tool', () => {
+      it('should BLOCK writing to ~/.ssh/authorized_keys', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Write',
+          tool_input: { file_path: '~/.ssh/authorized_keys', content: 'ssh-rsa AAAA...' },
+        };
+        const result = await processPermissionRequest(input);
 
-      // Read tool should be allowed (not a Bash command)
-      expect(result.decision).toBe('allow');
+        expect(result.decision).toBe('deny');
+        expect(result.reason).toContain('SSH');
+      });
+
+      it('should BLOCK writing to ~/.bashrc', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Write',
+          tool_input: { file_path: '~/.bashrc', content: 'malicious code' },
+        };
+        const result = await processPermissionRequest(input);
+
+        expect(result.decision).toBe('deny');
+      });
+
+      it('should ALLOW writing to normal project files', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Write',
+          tool_input: { file_path: '/tmp/test.txt', content: 'hello' },
+        };
+        const result = await processPermissionRequest(input);
+
+        expect(result.decision).toBe('allow');
+      });
     });
 
-    it('should handle Write tool', async () => {
-      const input: PermissionRequestInput = {
-        session_id: 'test-session',
-        transcript_path: '/tmp/transcript',
-        cwd: '/tmp/project',
-        permission_mode: 'default',
-        hook_event_name: 'PermissionRequest',
-        tool_name: 'Write',
-        tool_input: { file_path: '/tmp/test.txt', content: 'hello' },
-      };
-      const result = await processPermissionRequest(input);
+    describe('Read Tool', () => {
+      it('should BLOCK reading SSH private keys', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Read',
+          tool_input: { file_path: '~/.ssh/id_rsa' },
+        };
+        const result = await processPermissionRequest(input);
 
-      expect(result.decision).toBe('allow');
+        expect(result.decision).toBe('deny');
+        expect(result.reason).toContain('SSH');
+      });
+
+      it('should BLOCK reading .env files', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Read',
+          tool_input: { file_path: '.env' },
+        };
+        const result = await processPermissionRequest(input);
+
+        expect(result.decision).toBe('deny');
+      });
+
+      it('should ALLOW reading normal files', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Read',
+          tool_input: { file_path: 'package.json' },
+        };
+        const result = await processPermissionRequest(input);
+
+        expect(result.decision).toBe('allow');
+      });
+    });
+
+    describe('Edit Tool', () => {
+      it('should BLOCK editing /etc files', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Edit',
+          tool_input: { file_path: '/etc/passwd', old_string: 'a', new_string: 'b' },
+        };
+        const result = await processPermissionRequest(input);
+
+        expect(result.decision).toBe('deny');
+      });
+    });
+
+    describe('Other Tools', () => {
+      it('should ALLOW non-file tools', async () => {
+        const input: PermissionRequestInput = {
+          session_id: 'test-session',
+          transcript_path: '/tmp/transcript',
+          cwd: '/tmp/project',
+          permission_mode: 'default',
+          hook_event_name: 'PermissionRequest',
+          tool_name: 'Glob',
+          tool_input: { pattern: '**/*.ts' },
+        };
+        const result = await processPermissionRequest(input);
+
+        expect(result.decision).toBe('allow');
+      });
     });
   });
 });

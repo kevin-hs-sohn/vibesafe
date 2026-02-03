@@ -12,6 +12,7 @@ import type {
 import { checkInstantBlock } from './guard/instant-block.js';
 import { detectCheckpoint } from './guard/checkpoint.js';
 import { checkTrustedDomains } from './guard/trusted-domain.js';
+import { checkFileTool } from './guard/file-tools.js';
 import { triageWithHaiku } from './guard/haiku-triage.js';
 import { reviewWithSonnet } from './guard/sonnet-review.js';
 import { getApiKey } from './cli/config.js';
@@ -38,17 +39,36 @@ export interface ProcessResult {
  * Process a PermissionRequest and determine if it should be allowed
  *
  * Flow:
- * 1. Non-Bash tools → Allow (only analyze Bash commands)
- * 2. Instant Block → Deny immediately
- * 3. No Checkpoint → Allow (safe command)
- * 4. Trusted Domain → Allow for network-only (NOT script execution)
- * 5. Checkpoint Triggered → LLM review (Haiku → Sonnet if escalated)
+ * 1. File Tools (Write/Edit/Read) → Check sensitive paths
+ * 2. Non-Bash tools → Allow (only analyze Bash commands)
+ * 3. Instant Block → Deny immediately
+ * 4. No Checkpoint → Allow (safe command)
+ * 5. Trusted Domain → Allow for network-only (NOT script execution)
+ * 6. Checkpoint Triggered → LLM review (Haiku → Sonnet if escalated)
  */
 export async function processPermissionRequest(
   input: PermissionRequestInput,
   anthropicClient?: Anthropic
 ): Promise<ProcessResult> {
-  // Step 1: Only analyze Bash commands
+  // Step 1: Check file tools for sensitive path access
+  if (input.tool_name === 'Write' || input.tool_name === 'Edit' || input.tool_name === 'Read') {
+    const fileCheck = checkFileTool(input.tool_name, input.tool_input);
+    if (fileCheck.blocked) {
+      return {
+        decision: 'deny',
+        reason: fileCheck.reason ?? 'Blocked: Sensitive file access',
+        source: 'instant-block',
+      };
+    }
+    // File tool with safe path - allow
+    return {
+      decision: 'allow',
+      reason: `File tool ${input.tool_name} with safe path`,
+      source: 'non-bash-tool',
+    };
+  }
+
+  // Step 2: Other non-Bash tools → Allow
   if (input.tool_name !== 'Bash') {
     return {
       decision: 'allow',

@@ -5,6 +5,31 @@
  * user-generated content. These are checked separately.
  */
 
+/**
+ * URL shorteners that can redirect to malicious domains
+ * These should always trigger security review
+ */
+export const URL_SHORTENERS: string[] = [
+  'bit.ly',
+  'tinyurl.com',
+  't.co',
+  'goo.gl',
+  'ow.ly',
+  'is.gd',
+  'buff.ly',
+  'adf.ly',
+  'j.mp',
+  'tr.im',
+  'short.io',
+  'rebrand.ly',
+  'cutt.ly',
+  'shorturl.at',
+  'tiny.cc',
+  'bc.vc',
+  'v.gd',
+  'x.co',
+];
+
 // Domains that are considered safe for script downloads and package installations
 export const TRUSTED_DOMAINS: string[] = [
   // Package managers & registries
@@ -155,4 +180,41 @@ export function extractUrls(command: string): string[] {
   const urlPattern = /https?:\/\/[^\s"'<>]+/gi;
   const matches = command.match(urlPattern);
   return matches ?? [];
+}
+
+/**
+ * Check if a hostname is a URL shortener
+ */
+export function isUrlShortener(hostname: string): boolean {
+  const normalizedHost = hostname.toLowerCase();
+  return URL_SHORTENERS.some((shortener) => {
+    const normalizedShortener = shortener.toLowerCase();
+    return (
+      normalizedHost === normalizedShortener ||
+      normalizedHost.endsWith('.' + normalizedShortener)
+    );
+  });
+}
+
+/**
+ * Check if a URL uses a URL shortener
+ */
+export function isShortenerUrl(url: string): boolean {
+  const hostname = extractHostname(url);
+  if (!hostname) {
+    return false;
+  }
+  return isUrlShortener(hostname);
+}
+
+/**
+ * Check if command contains any URL shortener URLs
+ */
+export function containsUrlShortener(command: string): { found: boolean; shortenerUrls: string[] } {
+  const urls = extractUrls(command);
+  const shortenerUrls = urls.filter((url) => isShortenerUrl(url));
+  return {
+    found: shortenerUrls.length > 0,
+    shortenerUrls,
+  };
 }

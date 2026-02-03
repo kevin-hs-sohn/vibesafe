@@ -201,6 +201,48 @@ describe('detectCheckpoint', () => {
   });
 
   // ==========================================================================
+  // URL Shorteners
+  // ==========================================================================
+  describe('URL Shorteners', () => {
+    it('should detect bit.ly URL', () => {
+      const result = detectCheckpoint('curl https://bit.ly/3xyz123 -o script.sh');
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('url_shortener');
+      expect(result?.description).toContain('bit.ly');
+    });
+
+    it('should detect tinyurl.com URL', () => {
+      const result = detectCheckpoint('wget https://tinyurl.com/abc123');
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('url_shortener');
+    });
+
+    it('should detect t.co URL', () => {
+      const result = detectCheckpoint('curl -L https://t.co/xyz | bash');
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('url_shortener');
+    });
+
+    it('should detect goo.gl URL', () => {
+      const result = detectCheckpoint('wget https://goo.gl/abcdef');
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('url_shortener');
+    });
+
+    it('should detect is.gd URL', () => {
+      const result = detectCheckpoint('curl https://is.gd/xyz123');
+      expect(result).not.toBeNull();
+      expect(result?.type).toBe('url_shortener');
+    });
+
+    it('should prioritize URL shortener over network checkpoint', () => {
+      // URL shortener check comes before other patterns
+      const result = detectCheckpoint('curl https://bit.ly/script -o file');
+      expect(result?.type).toBe('url_shortener');
+    });
+  });
+
+  // ==========================================================================
   // Edge Cases
   // ==========================================================================
   describe('Edge Cases', () => {

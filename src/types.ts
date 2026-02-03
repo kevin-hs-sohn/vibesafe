@@ -85,7 +85,7 @@ export interface BlockPattern {
 
 // Security Checkpoint
 export interface SecurityCheckpoint {
-  type: 'network' | 'package_install' | 'git_operation' | 'file_sensitive' | 'script_execution' | 'env_modification';
+  type: 'network' | 'package_install' | 'git_operation' | 'file_sensitive' | 'script_execution' | 'env_modification' | 'url_shortener';
   command: string;
   description: string;
 }
