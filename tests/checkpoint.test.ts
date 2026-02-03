@@ -88,8 +88,14 @@ describe('detectCheckpoint', () => {
       expect(result?.type).toBe('git_operation');
     });
 
-    it('should detect git commit', () => {
+    it('should NOT detect git commit (handled by instant-allow)', () => {
       const result = detectCheckpoint('git commit -m "feat: add feature"');
+      // git commit is now a safe command handled by instant-allow, not checkpoint
+      expect(result).toBeNull();
+    });
+
+    it('should detect git clean -fd', () => {
+      const result = detectCheckpoint('git clean -fd');
       expect(result).not.toBeNull();
       expect(result?.type).toBe('git_operation');
     });

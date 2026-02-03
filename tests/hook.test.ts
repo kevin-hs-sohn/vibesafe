@@ -47,18 +47,26 @@ describe('Hook Handler', () => {
   });
 
   // ==========================================================================
-  // Safe Commands - Allow without checkpoint
+  // Safe Commands - Allow via instant-allow or no-checkpoint
   // ==========================================================================
-  describe('Safe Commands (no checkpoint)', () => {
-    it('should allow git status', async () => {
+  describe('Safe Commands', () => {
+    it('should allow git status via instant-allow', async () => {
       const input = createTestInput('git status');
       const result = await processPermissionRequest(input);
 
       expect(result.decision).toBe('allow');
-      expect(result.source).toBe('no-checkpoint');
+      expect(result.source).toBe('instant-allow');
     });
 
-    it('should allow ls command', async () => {
+    it('should allow git commit via instant-allow', async () => {
+      const input = createTestInput('git commit -m "feat: add feature"');
+      const result = await processPermissionRequest(input);
+
+      expect(result.decision).toBe('allow');
+      expect(result.source).toBe('instant-allow');
+    });
+
+    it('should allow ls command (no checkpoint)', async () => {
       const input = createTestInput('ls -la');
       const result = await processPermissionRequest(input);
 
@@ -66,7 +74,7 @@ describe('Hook Handler', () => {
       expect(result.source).toBe('no-checkpoint');
     });
 
-    it('should allow cat non-sensitive files', async () => {
+    it('should allow cat non-sensitive files (no checkpoint)', async () => {
       const input = createTestInput('cat package.json');
       const result = await processPermissionRequest(input);
 

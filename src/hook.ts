@@ -10,6 +10,7 @@ import type {
   SecurityCheckpoint,
 } from './types.js';
 import { checkInstantBlock } from './guard/instant-block.js';
+import { checkInstantAllow } from './guard/instant-allow.js';
 import { detectCheckpoint } from './guard/checkpoint.js';
 import { checkTrustedDomains } from './guard/trusted-domain.js';
 import { checkFileTool } from './guard/file-tools.js';
@@ -19,6 +20,7 @@ import { getApiKey } from './cli/config.js';
 
 export type HookDecision = 'allow' | 'deny' | 'needs-review';
 export type DecisionSource =
+  | 'instant-allow'
   | 'instant-block'
   | 'trusted-domain'
   | 'no-checkpoint'
@@ -41,10 +43,11 @@ export interface ProcessResult {
  * Flow:
  * 1. File Tools (Write/Edit/Read) → Check sensitive paths
  * 2. Non-Bash tools → Allow (only analyze Bash commands)
- * 3. Instant Block → Deny immediately
- * 4. No Checkpoint → Allow (safe command)
- * 5. Trusted Domain → Allow for network-only (NOT script execution)
- * 6. Checkpoint Triggered → LLM review (Haiku → Sonnet if escalated)
+ * 3. Instant Allow → Allow safe patterns (e.g., git status) without LLM
+ * 4. Instant Block → Deny immediately
+ * 5. No Checkpoint → Allow (safe command)
+ * 6. Trusted Domain → Allow for network-only (NOT script execution)
+ * 7. Checkpoint Triggered → LLM review (Haiku → Sonnet if escalated)
  */
 export async function processPermissionRequest(
   input: PermissionRequestInput,
@@ -79,7 +82,17 @@ export async function processPermissionRequest(
 
   const command = input.tool_input.command as string;
 
-  // Step 2: Check for instant block patterns
+  // Step 3: Check for instant allow patterns (safe commands that skip LLM)
+  const allowResult = checkInstantAllow(command);
+  if (allowResult.allowed) {
+    return {
+      decision: 'allow',
+      reason: allowResult.reason ?? 'Safe command pattern',
+      source: 'instant-allow',
+    };
+  }
+
+  // Step 4: Check for instant block patterns
   const blockResult = checkInstantBlock(command);
   if (blockResult.blocked) {
     return {
@@ -89,7 +102,7 @@ export async function processPermissionRequest(
     };
   }
 
-  // Step 3: Check if command triggers a checkpoint
+  // Step 5: Check if command triggers a checkpoint
   const checkpoint = detectCheckpoint(command);
   if (!checkpoint) {
     return {
@@ -99,7 +112,7 @@ export async function processPermissionRequest(
     };
   }
 
-  // Step 4: For network operations (not script execution), check trusted domains
+  // Step 6: For network operations (not script execution), check trusted domains
   // SECURITY: script_execution (curl | bash) is NEVER auto-approved, even from trusted domains
   // because anyone can upload malicious scripts to GitHub/npm/etc.
   if (checkpoint.type === 'network') {
@@ -113,7 +126,7 @@ export async function processPermissionRequest(
     }
   }
 
-  // Step 5: LLM review if API key is available
+  // Step 7: LLM review if API key is available
   if (!anthropicClient) {
     return {
       decision: 'needs-review',

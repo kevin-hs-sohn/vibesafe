@@ -459,11 +459,11 @@ export const CHECKPOINT_PATTERNS: CheckpointPattern[] = [
   { pattern: /apt(-get)?\s+install/i, type: 'package_install', description: 'apt install' },
   { pattern: /brew\s+install/i, type: 'package_install', description: 'brew install' },
 
-  // Git operations
+  // Git operations (only dangerous ones - safe git commands handled by instant-allow)
   { pattern: /git\s+push/i, type: 'git_operation', description: 'git push' },
-  { pattern: /git\s+commit/i, type: 'git_operation', description: 'git commit' },
   { pattern: /git\s+reset\s+--hard/i, type: 'git_operation', description: 'git reset --hard' },
   { pattern: /git\s+.*--force/i, type: 'git_operation', description: 'git force operation' },
+  { pattern: /git\s+clean\s+-[a-z]*f/i, type: 'git_operation', description: 'git clean with force' },
 
   // Environment files
   { pattern: /\.env(?:\.local|\.production|\.development)?(?:\s|$|["'])/i, type: 'env_modification', description: '.env file access' },
