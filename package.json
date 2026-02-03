@@ -33,11 +33,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kevin-hs-sohn/vibesafe.git"
+    "url": "https://github.com/kevin-hs-sohn/vibesafu.git"
   },
-  "homepage": "https://github.com/kevin-hs-sohn/vibesafe#readme",
+  "homepage": "https://github.com/kevin-hs-sohn/vibesafu#readme",
   "bugs": {
-    "url": "https://github.com/kevin-hs-sohn/vibesafe/issues"
+    "url": "https://github.com/kevin-hs-sohn/vibesafu/issues"
   },
   "engines": {
     "node": ">=18.0.0"
