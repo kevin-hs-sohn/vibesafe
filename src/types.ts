@@ -82,3 +82,10 @@ export interface BlockPattern {
   severity: 'critical' | 'high' | 'medium';
   description: string;
 }
+
+// Security Checkpoint
+export interface SecurityCheckpoint {
+  type: 'network' | 'package_install' | 'git_operation' | 'file_sensitive' | 'script_execution' | 'env_modification';
+  command: string;
+  description: string;
+}

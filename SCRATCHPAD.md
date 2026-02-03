@@ -2,8 +2,8 @@
 
 ## Current Session
 - Date: 2026-02-03
-- Focus: Core Guard 모듈 구현 (instant-block, checkpoint, trusted-domain)
-- Status: Phase 4.5 완료 - 105 tests passing
+- Focus: CLI Commands 구현 (check, install, uninstall, config)
+- Status: Phase 5 완료 - 122 tests passing
 
 ## Progress Tracker
 
@@ -39,10 +39,11 @@
 - [x] checkpoint.ts 구현
 
 ### Phase 5: CLI Commands
-- [ ] install 명령
-- [ ] uninstall 명령
-- [ ] check 명령
-- [ ] config 명령
+- [x] hook.ts 통합 핸들러 (17 tests)
+- [x] install 명령
+- [x] uninstall 명령
+- [x] check 명령
+- [x] config 명령
 
 ### Phase 6: LLM Integration
 - [ ] haiku-triage.ts
@@ -58,9 +59,9 @@
 - (현재 없음)
 
 ## Notes
-- 프로젝트 초기화 시작
 - pnpm 패키지 매니저 사용
-- Git 원격 저장소는 나중에 설정
+- Git workflow: feature 브랜치 → PR
+- 현재 브랜치: feature/cli-commands
 
 ## Last Updated
 - 2026-02-03

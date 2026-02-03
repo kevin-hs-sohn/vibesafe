@@ -11,6 +11,9 @@
  */
 
 import { parseArgs } from 'node:util';
+import { install, uninstall } from './cli/install.js';
+import { config } from './cli/config.js';
+import { check } from './cli/check.js';
 
 const COMMANDS = ['install', 'uninstall', 'check', 'config'] as const;
 type Command = (typeof COMMANDS)[number];
@@ -24,6 +27,8 @@ async function main(): Promise<void> {
   const command = positionals[0] as Command | undefined;
 
   if (!command || !COMMANDS.includes(command)) {
+    console.error('VibeSafe - Claude Code Security Guard');
+    console.error('');
     console.error(`Usage: vibesafe <${COMMANDS.join('|')}>`);
     console.error('');
     console.error('Commands:');
@@ -34,19 +39,18 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // TODO: Implement command handlers
   switch (command) {
     case 'install':
-      console.log('TODO: Install hook');
+      await install();
       break;
     case 'uninstall':
-      console.log('TODO: Uninstall hook');
+      await uninstall();
       break;
     case 'check':
-      console.log('TODO: Run security check');
+      await check();
       break;
     case 'config':
-      console.log('TODO: Configure settings');
+      await config();
       break;
   }
 }

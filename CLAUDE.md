@@ -21,6 +21,14 @@
 1. `pnpm typecheck` - 타입 에러 없음
 2. `pnpm test` - 테스트 통과
 
+## Git Workflow
+- Never commit/push directly to main
+- Create branch: `feature/`, `fix/`, `refactor/`
+- On completion: push branch and create PR via `gh pr create`
+- Never merge own PR - wait for human review
+- Commits: Conventional format, < 50 chars
+- One logical change per commit
+
 ## TDD Workflow
 **Test-Driven Development 필수.**
 
