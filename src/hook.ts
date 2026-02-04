@@ -18,6 +18,9 @@ import { triageWithHaiku } from './guard/haiku-triage.js';
 import { reviewWithSonnet } from './guard/sonnet-review.js';
 import { getApiKey } from './cli/config.js';
 
+/** Timeout in seconds before auto-denying risky commands */
+const TIMEOUT_SECONDS = 3;
+
 export type HookDecision = 'allow' | 'deny' | 'needs-review';
 export type DecisionSource =
   | 'instant-allow'
@@ -67,7 +70,7 @@ export async function processPermissionRequest(
         decision: 'needs-review',
         reason: `[${severityLabel}] ${fileCheck.reason}`,
         source: 'high-risk',
-        userMessage: `[${severityLabel}] ${fileCheck.reason} (Auto-reject in 10s)\n\nPotential risk: ${fileCheck.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
+        userMessage: `[${severityLabel}] ${fileCheck.reason} (Auto-reject in ${TIMEOUT_SECONDS}s)\n\nPotential risk: ${fileCheck.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
       };
     }
     // File tool with safe path - allow
@@ -111,7 +114,7 @@ export async function processPermissionRequest(
       decision: 'needs-review',
       reason: `[${severityLabel}] ${highRisk.description}`,
       source: 'high-risk',
-      userMessage: `[${severityLabel}] ${highRisk.description} (Auto-reject in 10s)\n\nPotential risk: ${highRisk.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
+      userMessage: `[${severityLabel}] ${highRisk.description} (Auto-reject in ${TIMEOUT_SECONDS}s)\n\nPotential risk: ${highRisk.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
     };
   }
 
@@ -272,7 +275,6 @@ export async function runHook(): Promise<void> {
   }
 
   const warningMessage = result.userMessage ?? result.reason;
-  const TIMEOUT_SECONDS = 3;
 
   // Both 'deny' and 'needs-review': wait for timeout, then deny
   // During this time, user can click "Allow" in Claude Code's override dialog
