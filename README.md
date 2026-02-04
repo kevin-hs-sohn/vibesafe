@@ -218,6 +218,39 @@ pnpm build
 pnpm verify
 ```
 
+## Security Model
+
+### What VibeSafu Protects Against
+
+VibeSafu provides **pre-execution review** of commands. It analyzes commands before they run and blocks dangerous patterns:
+
+- **Prompt Injection Attacks**: Blocks attempts to manipulate Claude into running malicious code
+- **Supply Chain Attacks**: Forces review of package installations and untrusted scripts
+- **Data Exfiltration**: Blocks commands that try to send sensitive data to external servers
+- **Reverse Shells**: Instant-blocks common reverse shell patterns
+- **Crypto Mining**: Blocks cryptocurrency mining commands
+
+### What VibeSafu Does NOT Protect Against
+
+VibeSafu is a **static pre-execution analyzer**, not a runtime sandbox. It cannot protect against:
+
+| Limitation | Description | Recommendation |
+|------------|-------------|----------------|
+| **TOCTOU Attacks** | File modified between analysis and execution | Use Docker/firejail sandbox |
+| **Environment Manipulation** | PATH, LD_PRELOAD, alias poisoning | Use isolated environments |
+| **Multi-stage Chains** | Only 1st level of downloads analyzed | Review scripts manually |
+| **Conditional Malware** | Code behaving differently based on environment | Use runtime monitoring |
+| **Runtime Exploits** | Vulnerabilities in executed code | Use security scanning tools |
+
+### Defense in Depth
+
+For maximum security, combine VibeSafu with:
+
+1. **Sandbox** (Docker, firejail) - Isolates execution environment
+2. **Network Monitoring** - Detects suspicious outbound connections
+3. **File Integrity** - Monitors file changes
+4. **Code Review** - Manual review of downloaded scripts
+
 ## FAQ
 
 ### Do I need an Anthropic API key?
