@@ -561,33 +561,47 @@ const SELF_PROTECTION_RISK = 'Attempting to disable security monitoring - this c
 const SELF_PROTECTION_LEGIT = ['Intentionally uninstalling VibeSafu via CLI'];
 
 export const SELF_PROTECTION_PATTERNS: BlockPattern[] = [
+  // Match vibesafu uninstall at command start or after separator (;, &&, ||, |)
+  // Excludes matches inside heredocs/echo/strings
   {
     name: 'vibesafu_uninstall',
-    pattern: /vibesafu?\s+uninstall/i,
+    pattern: /(?:^|[;&|]\s*)vibesafu?\s+uninstall/i,
     severity: 'critical',
     description: 'Attempting to uninstall VibeSafu security hook',
     risk: SELF_PROTECTION_RISK,
     legitimateUses: SELF_PROTECTION_LEGIT,
   },
+  // rm command specifically targeting vibesafu
   {
     name: 'vibesafu_rm',
-    pattern: /rm\s+.*vibesafu/i,
+    pattern: /(?:^|[;&|]\s*)rm\s+(-[rf]+\s+)?.*vibesafu/i,
     severity: 'critical',
     description: 'Attempting to delete VibeSafu files',
     risk: SELF_PROTECTION_RISK,
     legitimateUses: SELF_PROTECTION_LEGIT,
   },
+  // Direct file operations on claude settings (cat >, >, echo >)
   {
-    name: 'claude_settings_modify',
-    pattern: /\.claude\/settings\.json/i,
+    name: 'claude_settings_write',
+    pattern: /(?:^|[;&|]\s*)(?:cat|echo|printf)\s+.*>\s*~?\/?.claude\/settings\.json/i,
     severity: 'critical',
-    description: 'Attempting to modify Claude Code settings (could disable security hooks)',
+    description: 'Attempting to overwrite Claude Code settings',
     risk: SELF_PROTECTION_RISK,
     legitimateUses: ['Manually configuring Claude Code settings'],
   },
+  // sed/awk editing claude settings
+  {
+    name: 'claude_settings_edit',
+    pattern: /(?:^|[;&|]\s*)(?:sed|awk)\s+.*\.claude\/settings\.json/i,
+    severity: 'critical',
+    description: 'Attempting to edit Claude Code settings',
+    risk: SELF_PROTECTION_RISK,
+    legitimateUses: ['Manually configuring Claude Code settings'],
+  },
+  // kill/pkill targeting vibesafu
   {
     name: 'vibesafu_kill',
-    pattern: /kill.*vibesafu|pkill.*vibesafu/i,
+    pattern: /(?:^|[;&|]\s*)(?:kill|pkill|killall)\s+.*vibesafu/i,
     severity: 'critical',
     description: 'Attempting to kill VibeSafu process',
     risk: SELF_PROTECTION_RISK,
