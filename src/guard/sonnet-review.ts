@@ -90,6 +90,7 @@ BLOCK - Do not allow:
 - Clear security risk
 - No legitimate use case in this context
 - Could cause data loss or system compromise
+- Still provide user_message explaining the security risk concisely
 </verdict_rules>
 
 <response_format>
@@ -101,7 +102,7 @@ BLOCK - Do not allow:
     "risks": ["Risk 1", "Risk 2"],
     "mitigations": ["Alternative 1", "Alternative 2"]
   },
-  "user_message": "Message to show the user if ASK_USER (null if not applicable)"
+  "user_message": "Concise message explaining the security risk to the user (2-3 sentences max). Do NOT include timing or instructions - those are added automatically."
 }
 </response_format>`;
 

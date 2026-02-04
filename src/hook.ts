@@ -1,5 +1,5 @@
 /**
- * VibeSafe Hook Handler
+ * VibeSafu Hook Handler
  * Main entry point for processing PermissionRequest events
  */
 
@@ -67,7 +67,7 @@ export async function processPermissionRequest(
         decision: 'needs-review',
         reason: `[${severityLabel}] ${fileCheck.reason}`,
         source: 'high-risk',
-        userMessage: `[${severityLabel}] ${fileCheck.reason}\n\nPotential risk: ${fileCheck.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
+        userMessage: `[${severityLabel}] ${fileCheck.reason} (Auto-reject in 10s)\n\nPotential risk: ${fileCheck.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
       };
     }
     // File tool with safe path - allow
@@ -111,7 +111,7 @@ export async function processPermissionRequest(
       decision: 'needs-review',
       reason: `[${severityLabel}] ${highRisk.description}`,
       source: 'high-risk',
-      userMessage: `[${severityLabel}] ${highRisk.description}\n\nPotential risk: ${highRisk.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
+      userMessage: `[${severityLabel}] ${highRisk.description} (Auto-reject in 10s)\n\nPotential risk: ${highRisk.risk}${legitimateUsesText}\n\nOnly proceed if you know what you're doing.`,
     };
   }
 
@@ -180,6 +180,7 @@ export async function processPermissionRequest(
       decision: 'deny',
       reason: `Blocked by Sonnet: ${review.reason}`,
       source: 'sonnet',
+      userMessage: review.userMessage,
     };
   }
 
@@ -208,7 +209,7 @@ export async function processPermissionRequest(
  * Create the hook output in the expected format
  */
 export function createHookOutput(
-  decision: 'allow' | 'deny',
+  decision: 'allow' | 'deny' | 'ask',
   message?: string
 ): PermissionRequestOutput {
   const output: PermissionRequestOutput = {
@@ -261,22 +262,24 @@ export async function runHook(): Promise<void> {
   // Convert result to hook output
   let output: PermissionRequestOutput;
 
-  if (result.decision === 'deny') {
-    output = createHookOutput('deny', result.reason);
-  } else if (result.decision === 'needs-review') {
-    if (result.userMessage) {
-      // Sonnet asked for user confirmation
-      output = createHookOutput('deny', `User approval required: ${result.userMessage}`);
-    } else {
-      // No API key configured
-      output = createHookOutput(
-        'deny',
-        `Security review required: ${result.reason}. Configure API key with 'vibesafu config' to enable LLM analysis.`
-      );
-    }
-  } else {
+  if (result.decision === 'allow') {
     output = createHookOutput('allow');
+    console.log(JSON.stringify(output));
+    return;
   }
 
+  const warningMessage = result.userMessage ?? result.reason;
+  const TIMEOUT_SECONDS = 3;
+
+  // Both 'deny' and 'needs-review': wait for timeout, then deny
+  // During this time, user can click "Allow" in Claude Code's override dialog
+  await new Promise((resolve) => setTimeout(resolve, TIMEOUT_SECONDS * 1000));
+
+  // Still here after timeout = user didn't allow, auto-deny
+  const denyMessage = `🛡️ [VibeSafu] Auto-denied (no response in ${TIMEOUT_SECONDS}s)\n\n` +
+    `Reason: ${warningMessage}\n\n` +
+    `If this was intentional, re-run the command and click "Allow" within ${TIMEOUT_SECONDS} seconds.`;
+
+  output = createHookOutput('deny', denyMessage);
   console.log(JSON.stringify(output));
 }

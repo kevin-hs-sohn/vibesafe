@@ -557,6 +557,44 @@ export const DESTRUCTIVE_PATTERNS: BlockPattern[] = [
   },
 ];
 
+const SELF_PROTECTION_RISK = 'Attempting to disable security monitoring - this could be a prompt injection attack';
+const SELF_PROTECTION_LEGIT = ['Intentionally uninstalling VibeSafu via CLI'];
+
+export const SELF_PROTECTION_PATTERNS: BlockPattern[] = [
+  {
+    name: 'vibesafu_uninstall',
+    pattern: /vibesafu?\s+uninstall/i,
+    severity: 'critical',
+    description: 'Attempting to uninstall VibeSafu security hook',
+    risk: SELF_PROTECTION_RISK,
+    legitimateUses: SELF_PROTECTION_LEGIT,
+  },
+  {
+    name: 'vibesafu_rm',
+    pattern: /rm\s+.*vibesafu/i,
+    severity: 'critical',
+    description: 'Attempting to delete VibeSafu files',
+    risk: SELF_PROTECTION_RISK,
+    legitimateUses: SELF_PROTECTION_LEGIT,
+  },
+  {
+    name: 'claude_settings_modify',
+    pattern: /\.claude\/settings\.json/i,
+    severity: 'critical',
+    description: 'Attempting to modify Claude Code settings (could disable security hooks)',
+    risk: SELF_PROTECTION_RISK,
+    legitimateUses: ['Manually configuring Claude Code settings'],
+  },
+  {
+    name: 'vibesafu_kill',
+    pattern: /kill.*vibesafu|pkill.*vibesafu/i,
+    severity: 'critical',
+    description: 'Attempting to kill VibeSafu process',
+    risk: SELF_PROTECTION_RISK,
+    legitimateUses: SELF_PROTECTION_LEGIT,
+  },
+];
+
 // All instant block patterns combined
 export const INSTANT_BLOCK_PATTERNS: BlockPattern[] = [
   ...REVERSE_SHELL_PATTERNS,
@@ -564,6 +602,7 @@ export const INSTANT_BLOCK_PATTERNS: BlockPattern[] = [
   ...CRYPTO_MINING_PATTERNS,
   ...OBFUSCATED_EXEC_PATTERNS,
   ...DESTRUCTIVE_PATTERNS,
+  ...SELF_PROTECTION_PATTERNS,
 ];
 
 // =============================================================================

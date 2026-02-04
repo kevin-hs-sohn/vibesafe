@@ -119,13 +119,21 @@ const WRITE_SENSITIVE_PATHS: SensitivePath[] = [
     risk: 'Can steal PyPI tokens or redirect package installs',
     legitimateUses: ['Configuring PyPI', 'Publishing packages'] },
 
-  // Claude Code config - High (could modify AI behavior)
-  { pattern: /CLAUDE\.md$/i, description: 'Claude instructions file', severity: 'high',
+  // Claude Code config - Critical (could disable security)
+  { pattern: /CLAUDE\.md$/i, description: 'Claude instructions file', severity: 'critical',
     risk: 'Can modify AI behavior and disable security rules',
     legitimateUses: ['Updating project instructions', 'Configuring Claude behavior'] },
-  { pattern: /^~?\/?\.claude\//i, description: 'Claude config directory', severity: 'high',
-    risk: 'Can modify Claude Code settings',
+  { pattern: /^~?\/?\.claude\//i, description: 'Claude config directory', severity: 'critical',
+    risk: 'Can modify Claude Code settings and disable security hooks',
     legitimateUses: ['Configuring Claude Code'] },
+  { pattern: /\.claude\/settings\.json$/i, description: 'Claude Code settings', severity: 'critical',
+    risk: 'Can disable VibeSafu security hook - potential prompt injection attack',
+    legitimateUses: ['Manually configuring Claude Code'] },
+
+  // VibeSafu self-protection - Critical
+  { pattern: /vibesafu?\//i, description: 'VibeSafu directory', severity: 'critical',
+    risk: 'Modifying security tool could disable protection - potential prompt injection attack',
+    legitimateUses: ['VibeSafu development', 'Legitimate updates'] },
 ];
 
 /**
