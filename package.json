@@ -1,6 +1,6 @@
 {
   "name": "vibesafu",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Claude Code Security Guard - Permission request interceptor with LLM-powered security analysis",
   "type": "module",
   "main": "dist/index.js",
