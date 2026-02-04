@@ -59,6 +59,15 @@ const REVIEW_USER_PROMPT = `<task>Perform security review of this operation</tas
 1. Intent Analysis: What is this command trying to accomplish?
 2. Risk Assessment: What could go wrong?
 3. Mitigation: Are there safer alternatives?
+4. Secondary Downloads: Does this script/command download and execute additional code?
+   - Look for: curl|wget inside scripts, eval(), bash -c "$(curl ...)", exec()
+   - Check for embedded download URLs that will fetch more code
+5. Privilege Escalation Flow: Is this part of a dangerous pattern?
+   - download → chmod +x → execute → sudo sequence
+   - Commands requesting elevated permissions after downloading
+6. Dynamic Execution: Does this use dangerous dynamic execution?
+   - eval, exec, or command substitution with external input
+   - Code that builds and executes strings dynamically
 </analysis_required>
 
 <verdict_rules>
@@ -66,11 +75,16 @@ ALLOW - Safe to proceed autonomously:
 - Legitimate development operation
 - No significant risk to system or data
 - Source is verifiable and trusted
+- No secondary downloads or dynamic execution patterns
 
-ASK_USER - Need human approval:
+ASK_USER - Need human approval (choose this if ANY risky pattern detected):
 - Operation has potential risks but may be legitimate
 - User should understand what will happen
 - Provide clear explanation of risks
+- Contains secondary downloads (curl|wget inside script content)
+- Part of privilege escalation flow (download + execute + sudo)
+- Uses dynamic execution (eval, exec with external input)
+- Downloads content that will be executed later
 
 BLOCK - Do not allow:
 - Clear security risk
