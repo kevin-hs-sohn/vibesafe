@@ -176,12 +176,15 @@ export async function processPermissionRequest(
   const review = await reviewWithSonnet(anthropicClient, checkpoint, triage);
 
   if (review.verdict === 'BLOCK') {
-    return {
+    const result: ProcessResult = {
       decision: 'deny',
       reason: `Blocked by Sonnet: ${review.reason}`,
       source: 'sonnet',
-      userMessage: review.userMessage,
     };
+    if (review.userMessage) {
+      result.userMessage = review.userMessage;
+    }
+    return result;
   }
 
   if (review.verdict === 'ALLOW') {
