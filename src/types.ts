@@ -1,5 +1,5 @@
 /**
- * Claude Code Hook Types for VibeSafe
+ * Claude Code Hook Types for VibeSafu
  */
 
 // Hook Input (stdin)
@@ -22,7 +22,7 @@ export interface PermissionRequestOutput {
   hookSpecificOutput: {
     hookEventName: 'PermissionRequest';
     decision: {
-      behavior: 'allow' | 'deny';
+      behavior: 'allow' | 'deny' | 'ask';
       message?: string;
       updatedInput?: Record<string, unknown>;
     };
@@ -56,7 +56,7 @@ export interface SonnetReviewResult {
 }
 
 // Config
-export interface VibeSafeConfig {
+export interface VibeSafuConfig {
   anthropic: {
     apiKey: string;
   };

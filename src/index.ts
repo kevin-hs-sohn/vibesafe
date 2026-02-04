@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * VibeSafe CLI - Claude Code Security Guard
+ * VibeSafu CLI - Claude Code Security Guard
  *
  * Commands:
  *   install   - Install hook to ~/.claude/settings.json
@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   const command = positionals[0] as Command | undefined;
 
   if (!command || !COMMANDS.includes(command)) {
-    console.error('VibeSafe - Claude Code Security Guard');
+    console.error('VibeSafu - Claude Code Security Guard');
     console.error('');
     console.error(`Usage: vibesafu <${COMMANDS.join('|')}>`);
     console.error('');

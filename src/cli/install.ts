@@ -1,6 +1,6 @@
 /**
  * CLI Install Command
- * Installs VibeSafe hook to Claude Code settings
+ * Installs VibeSafu hook to Claude Code settings
  */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -22,7 +22,7 @@ interface ClaudeSettings {
   [key: string]: unknown;
 }
 
-const VIBESAFE_HOOK = {
+const VIBESAFU_HOOK = {
   matcher: '*',
   hooks: [
     {
@@ -55,7 +55,7 @@ async function writeClaudeSettings(settings: ClaudeSettings): Promise<void> {
 }
 
 /**
- * Check if VibeSafe hook is already installed
+ * Check if VibeSafu hook is already installed
  */
 function isHookInstalled(settings: ClaudeSettings): boolean {
   const hooks = settings.hooks?.PermissionRequest ?? [];
@@ -65,15 +65,15 @@ function isHookInstalled(settings: ClaudeSettings): boolean {
 }
 
 /**
- * Install VibeSafe hook
+ * Install VibeSafu hook
  */
 export async function install(): Promise<void> {
-  console.log('Installing VibeSafe hook...');
+  console.log('Installing VibeSafu hook...');
 
   const settings = await readClaudeSettings();
 
   if (isHookInstalled(settings)) {
-    console.log('VibeSafe hook is already installed.');
+    console.log('VibeSafu hook is already installed.');
     return;
   }
 
@@ -85,12 +85,12 @@ export async function install(): Promise<void> {
     settings.hooks.PermissionRequest = [];
   }
 
-  // Add VibeSafe hook
-  settings.hooks.PermissionRequest.push(VIBESAFE_HOOK);
+  // Add VibeSafu hook
+  settings.hooks.PermissionRequest.push(VIBESAFU_HOOK);
 
   await writeClaudeSettings(settings);
 
-  console.log('VibeSafe hook installed successfully!');
+  console.log('VibeSafu hook installed successfully!');
   console.log(`Settings file: ${CLAUDE_SETTINGS_PATH}`);
   console.log('');
   console.log('Next steps:');
@@ -99,19 +99,19 @@ export async function install(): Promise<void> {
 }
 
 /**
- * Uninstall VibeSafe hook
+ * Uninstall VibeSafu hook
  */
 export async function uninstall(): Promise<void> {
-  console.log('Uninstalling VibeSafe hook...');
+  console.log('Uninstalling VibeSafu hook...');
 
   const settings = await readClaudeSettings();
 
   if (!isHookInstalled(settings)) {
-    console.log('VibeSafe hook is not installed.');
+    console.log('VibeSafu hook is not installed.');
     return;
   }
 
-  // Remove VibeSafe hooks
+  // Remove VibeSafu hooks
   if (settings.hooks?.PermissionRequest) {
     settings.hooks.PermissionRequest = settings.hooks.PermissionRequest.filter(
       (h) => !h.hooks.some((hook) => hook.command.includes('vibesafu'))
@@ -128,5 +128,5 @@ export async function uninstall(): Promise<void> {
 
   await writeClaudeSettings(settings);
 
-  console.log('VibeSafe hook uninstalled successfully!');
+  console.log('VibeSafu hook uninstalled successfully!');
 }
