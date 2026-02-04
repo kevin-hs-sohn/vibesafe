@@ -26,29 +26,40 @@ describe('Haiku Triage', () => {
   });
 
   // ==========================================================================
-  // SELF_HANDLE - Haiku can approve directly
+  // Package Install - ALWAYS ESCALATE (supply chain risk)
   // ==========================================================================
-  describe('SELF_HANDLE (Haiku approves)', () => {
-    it('should return SELF_HANDLE for standard npm install', async () => {
-      mockAnthropicClient.messages.create.mockResolvedValueOnce({
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            classification: 'SELF_HANDLE',
-            reason: 'Standard npm install of well-known package',
-            risk_indicators: [],
-          }),
-        }],
-      });
-
+  describe('Package Install (always escalate)', () => {
+    it('should force ESCALATE for npm install even if Haiku says SELF_HANDLE', async () => {
+      // Haiku is not even called for package_install - immediate escalate
       const checkpoint = createCheckpoint('package_install', 'npm install lodash');
       const result = await triageWithHaiku(mockAnthropicClient as any, checkpoint);
 
-      expect(result.classification).toBe('SELF_HANDLE');
-      expect(result.reason).toContain('npm install');
-      expect(mockAnthropicClient.messages.create).toHaveBeenCalledTimes(1);
+      expect(result.classification).toBe('ESCALATE');
+      expect(result.reason).toContain('Package installation');
+      // Haiku should NOT be called
+      expect(mockAnthropicClient.messages.create).not.toHaveBeenCalled();
     });
 
+    it('should force ESCALATE for pip install', async () => {
+      const checkpoint = createCheckpoint('package_install', 'pip install requests');
+      const result = await triageWithHaiku(mockAnthropicClient as any, checkpoint);
+
+      expect(result.classification).toBe('ESCALATE');
+      expect(mockAnthropicClient.messages.create).not.toHaveBeenCalled();
+    });
+
+    it('should force ESCALATE for pnpm add', async () => {
+      const checkpoint = createCheckpoint('package_install', 'pnpm add react');
+      const result = await triageWithHaiku(mockAnthropicClient as any, checkpoint);
+
+      expect(result.classification).toBe('ESCALATE');
+    });
+  });
+
+  // ==========================================================================
+  // SELF_HANDLE - Haiku can approve directly (non-package operations)
+  // ==========================================================================
+  describe('SELF_HANDLE (Haiku approves)', () => {
     it('should return SELF_HANDLE for git commit', async () => {
       mockAnthropicClient.messages.create.mockResolvedValueOnce({
         content: [{
@@ -91,19 +102,19 @@ describe('Haiku Triage', () => {
       expect(result.riskIndicators).toContain('untrusted_source');
     });
 
-    it('should return ESCALATE for unfamiliar package', async () => {
+    it('should return ESCALATE for uncertain network operation', async () => {
       mockAnthropicClient.messages.create.mockResolvedValueOnce({
         content: [{
           type: 'text',
           text: JSON.stringify({
             classification: 'ESCALATE',
-            reason: 'Unfamiliar package needs review',
-            risk_indicators: ['unknown_package'],
+            reason: 'Unfamiliar domain needs review',
+            risk_indicators: ['unknown_domain'],
           }),
         }],
       });
 
-      const checkpoint = createCheckpoint('package_install', 'npm install suspicious-pkg-xyz123');
+      const checkpoint = createCheckpoint('network', 'curl https://unknown-site.xyz/data');
       const result = await triageWithHaiku(mockAnthropicClient as any, checkpoint);
 
       expect(result.classification).toBe('ESCALATE');
@@ -219,7 +230,8 @@ describe('Haiku Triage', () => {
         }],
       });
 
-      const checkpoint = createCheckpoint('package_install', 'npm install react');
+      // Use network type (not package_install which forces escalate)
+      const checkpoint = createCheckpoint('network', 'curl https://example.com/file.zip');
       await triageWithHaiku(mockAnthropicClient as any, checkpoint);
 
       const [requestBody, options] = mockAnthropicClient.messages.create.mock.calls[0];
@@ -242,11 +254,12 @@ describe('Haiku Triage', () => {
         }],
       });
 
-      const checkpoint = createCheckpoint('package_install', 'npm install special-package');
+      // Use network type (not package_install which forces escalate)
+      const checkpoint = createCheckpoint('network', 'wget https://example.com/data.tar.gz');
       await triageWithHaiku(mockAnthropicClient as any, checkpoint);
 
       const call = mockAnthropicClient.messages.create.mock.calls[0][0];
-      expect(call.messages[0].content).toContain('npm install special-package');
+      expect(call.messages[0].content).toContain('wget https://example.com/data.tar.gz');
     });
   });
 

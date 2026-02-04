@@ -77,12 +77,30 @@ Respond with ONLY this JSON structure:
 </response_format>`;
 
 /**
+ * Checkpoint types that should always be escalated to Sonnet
+ * These have supply chain risks that need deeper review
+ */
+const FORCE_ESCALATE_TYPES: SecurityCheckpoint['type'][] = [
+  'package_install',  // Supply chain attacks via postinstall scripts
+];
+
+/**
  * Perform fast triage using Haiku
  */
 export async function triageWithHaiku(
   client: Anthropic,
   checkpoint: SecurityCheckpoint
 ): Promise<TriageResult> {
+  // SECURITY: Force escalate certain checkpoint types without calling Haiku
+  // Package installs and script execution always need Sonnet's deeper analysis
+  if (FORCE_ESCALATE_TYPES.includes(checkpoint.type)) {
+    return {
+      classification: 'ESCALATE',
+      reason: `Package installation requires Sonnet review (supply chain risk)`,
+      riskIndicators: ['force_escalate_type', checkpoint.type],
+    };
+  }
+
   // Sanitize command to prevent prompt injection
   const sanitizedCommand = sanitizeForPrompt(checkpoint.command);
 
