@@ -21,13 +21,21 @@
     "prepublishOnly": "pnpm verify && pnpm build"
   },
   "keywords": [
+    "claude",
     "claude-code",
     "security",
+    "prompt-injection",
+    "ai-security",
+    "llm-security",
+    "anthropic",
+    "llm",
+    "ai-agent",
+    "developer-tools",
+    "cli",
     "hook",
     "permission",
-    "cli",
-    "anthropic",
-    "llm"
+    "vibe-coding",
+    "agentic-coding"
   ],
   "author": "kevin-hs-sohn",
   "license": "MIT",

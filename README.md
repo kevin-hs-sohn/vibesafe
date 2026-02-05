@@ -1,5 +1,9 @@
 # VibeSafu
 
+[![npm version](https://badge.fury.io/js/vibesafu.svg)](https://www.npmjs.com/package/vibesafu)
+[![Downloads](https://img.shields.io/npm/dm/vibesafu.svg)](https://www.npmjs.com/package/vibesafu)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Security guard for Claude Code's `--dangerously-skip-permissions` mode**
 
 When you use `--dangerously-skip-permissions`, Claude Code can execute commands without asking for approval. This is great for flow, but risky if Claude gets prompt-injected or tries something suspicious.
