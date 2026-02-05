@@ -328,7 +328,11 @@ Yes! VibeSafu works with both CLI (`claude`) and VS Code extension.
 
 ### Is this a replacement for `--dangerously-skip-permissions`?
 
-No. VibeSafu is an *addition* to `--dangerously-skip-permissions`. It lets you use that flag more safely by adding a security layer on top.
+Yes! That's exactly what VibeSafu is for. Instead of choosing between:
+- Annoying permission prompts for everything, OR
+- `--dangerously-skip-permissions` with zero protection
+
+VibeSafu gives you the middle ground: auto-approve safe commands, flag risky ones.
 
 ## ⭐ Like it? Star it!
 
