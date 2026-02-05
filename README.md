@@ -4,11 +4,16 @@
 [![Downloads](https://img.shields.io/npm/dm/vibesafu.svg)](https://www.npmjs.com/package/vibesafu)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Security guard for Claude Code's `--dangerously-skip-permissions` mode**
+**Smart permission filter for Claude Code**
 
-When you use `--dangerously-skip-permissions`, Claude Code can execute commands without asking for approval. This is great for flow, but risky if Claude gets prompt-injected or tries something suspicious.
+Claude Code's default permission mode asks for approval on everything - even `git status` and `ls`. This trains you to spam "yes" without reading, or worse, use `--dangerously-skip-permissions` and bypass ALL safety checks.
 
-VibeSafu sits between Claude and your shell, automatically flagging anything a human developer would find suspicious.
+**VibeSafu fixes this:**
+- ✅ Auto-approves obviously safe commands (git, cat, ls, npm in your project)
+- ⚠️ Requires your review for anything risky (curl|bash, env access, file deletion)
+- 🛡️ Auto-denies clear threats unless you explicitly allow (reverse shells, data exfil)
+
+VibeSafu sits between Claude and your shell, automatically filtering commands so you only see the ones that actually need human review.
 
 ### Auto-Approval (Safe Commands)
 ![VibeSafu Auto-Approval](vibesafu-demo-approve.png)
@@ -259,12 +264,25 @@ Minimal impact:
 
 Most commands skip LLM entirely.
 
-### What if VibeSafu blocks something legitimate?
+### What if VibeSafu flags something legitimate?
 
-Review why it was blocked. If it's a false positive:
-1. Add domain to trusted list in config
+VibeSafu never unconditionally blocks commands. When it detects something risky, you have 3 seconds to click "Allow" in Claude Code's permission dialog. If you don't respond, it auto-denies for safety.
+
+If you're getting too many false positives:
+1. Add trusted domains to config for network requests
 2. Report the issue for pattern improvement
 3. Temporarily uninstall: `vibesafu uninstall`
+
+### Why not just use Docker or a sandbox?
+
+Different tools for different problems:
+
+| Approach | Solves | Doesn't solve |
+|----------|--------|---------------|
+| **Docker/Sandbox** | Containment - limits damage if something bad runs | Permission fatigue - you still approve everything |
+| **VibeSafu** | Permission fatigue - auto-approves safe commands | Containment - no runtime isolation |
+
+**Use both together for best security.** VibeSafu reduces the noise so you can actually pay attention when Docker catches something escaping the sandbox.
 
 ### Can I use this with VS Code?
 
