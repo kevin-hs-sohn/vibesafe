@@ -1,7 +1,7 @@
 {
   "name": "vibesafu",
-  "version": "0.1.12",
-  "description": "Claude Code Security Guard - Permission request interceptor with LLM-powered security analysis",
+  "version": "0.1.13",
+  "description": "Better Claude Code workflow with smart safety checks. Safe YOLO mode without --dangerously-skip-permission",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -23,19 +23,13 @@
   "keywords": [
     "claude",
     "claude-code",
-    "security",
-    "prompt-injection",
-    "ai-security",
-    "llm-security",
-    "anthropic",
-    "llm",
-    "ai-agent",
+    "developer-experience",
     "developer-tools",
     "cli",
-    "hook",
-    "permission",
-    "vibe-coding",
-    "agentic-coding"
+    "automation",
+    "productivity",
+    "safety",
+    "yolo"
   ],
   "author": "kevin-hs-sohn",
   "license": "MIT",
