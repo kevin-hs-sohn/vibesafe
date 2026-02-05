@@ -275,14 +275,15 @@ If you're getting too many false positives:
 
 ### Why not just use Docker or a sandbox?
 
-Different tools for different problems:
+Sandboxes solve containment, not permission fatigue. But they also have real limitations:
 
-| Approach | Solves | Doesn't solve |
-|----------|--------|---------------|
-| **Docker/Sandbox** | Containment - limits damage if something bad runs | Permission fatigue - you still approve everything |
-| **VibeSafu** | Permission fatigue - auto-approves safe commands | Containment - no runtime isolation |
+1. **Breaks real-world workflows** - Task automation, accessing your actual files/environment, system utilities - sandboxes can't do these without mounting volumes or granting permissions.
 
-**Use both together for best security.** VibeSafu reduces the noise so you can actually pay attention when Docker catches something escaping the sandbox.
+2. **Doesn't prevent inside-the-box attacks** - If you mount `.env` or grant network access (which dev work needs), Claude can still exfiltrate API keys from inside the container.
+
+3. **Setup cost** - Hours of Docker config vs 2 minutes for VibeSafu.
+
+**VibeSafu + sandbox = best of both worlds.** Use VibeSafu to filter permissions intelligently, and a sandbox for containment when you need it.
 
 ### Can I use this with VS Code?
 
