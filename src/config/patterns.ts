@@ -558,7 +558,7 @@ export const DESTRUCTIVE_PATTERNS: BlockPattern[] = [
 ];
 
 const SELF_PROTECTION_RISK = 'Attempting to disable security monitoring - this could be a prompt injection attack';
-const SELF_PROTECTION_LEGIT = ['Intentionally uninstalling VibeSafu via CLI'];
+const SELF_PROTECTION_LEGIT = ['Intentionally uninstalling vibesafu via CLI'];
 
 export const SELF_PROTECTION_PATTERNS: BlockPattern[] = [
   // Match vibesafu uninstall at command start or after separator (;, &&, ||, |)
@@ -567,7 +567,7 @@ export const SELF_PROTECTION_PATTERNS: BlockPattern[] = [
     name: 'vibesafu_uninstall',
     pattern: /(?:^|[;&|]\s*)vibesafu?\s+uninstall/i,
     severity: 'critical',
-    description: 'Attempting to uninstall VibeSafu security hook',
+    description: 'Attempting to uninstall vibesafu security hook',
     risk: SELF_PROTECTION_RISK,
     legitimateUses: SELF_PROTECTION_LEGIT,
   },
@@ -576,7 +576,7 @@ export const SELF_PROTECTION_PATTERNS: BlockPattern[] = [
     name: 'vibesafu_rm',
     pattern: /(?:^|[;&|]\s*)rm\s+(-[rf]+\s+)?.*vibesafu/i,
     severity: 'critical',
-    description: 'Attempting to delete VibeSafu files',
+    description: 'Attempting to delete vibesafu files',
     risk: SELF_PROTECTION_RISK,
     legitimateUses: SELF_PROTECTION_LEGIT,
   },
@@ -603,7 +603,7 @@ export const SELF_PROTECTION_PATTERNS: BlockPattern[] = [
     name: 'vibesafu_kill',
     pattern: /(?:^|[;&|]\s*)(?:kill|pkill|killall)\s+.*vibesafu/i,
     severity: 'critical',
-    description: 'Attempting to kill VibeSafu process',
+    description: 'Attempting to kill vibesafu process',
     risk: SELF_PROTECTION_RISK,
     legitimateUses: SELF_PROTECTION_LEGIT,
   },

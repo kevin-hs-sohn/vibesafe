@@ -1,6 +1,6 @@
 ---
 name: security-patterns
-description: VibeSafe security pattern definitions and update guidelines.
+description: vibesafu security pattern definitions and update guidelines.
 ---
 
 # Instant Block Patterns

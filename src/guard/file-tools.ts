@@ -127,13 +127,13 @@ const WRITE_SENSITIVE_PATHS: SensitivePath[] = [
     risk: 'Can modify Claude Code settings and disable security hooks',
     legitimateUses: ['Configuring Claude Code'] },
   { pattern: /\.claude\/settings\.json$/i, description: 'Claude Code settings', severity: 'critical',
-    risk: 'Can disable VibeSafu security hook - potential prompt injection attack',
+    risk: 'Can disable vibesafu security hook - potential prompt injection attack',
     legitimateUses: ['Manually configuring Claude Code'] },
 
-  // VibeSafu self-protection - Critical
-  { pattern: /vibesafu?\//i, description: 'VibeSafu directory', severity: 'critical',
+  // vibesafu self-protection - Critical
+  { pattern: /vibesafu?\//i, description: 'vibesafu directory', severity: 'critical',
     risk: 'Modifying security tool could disable protection - potential prompt injection attack',
-    legitimateUses: ['VibeSafu development', 'Legitimate updates'] },
+    legitimateUses: ['vibesafu development', 'Legitimate updates'] },
 ];
 
 /**

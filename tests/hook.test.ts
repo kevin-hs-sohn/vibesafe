@@ -366,7 +366,7 @@ describe('Hook Handler', () => {
   // Non-Bash Tool Handling (NEW)
   // ==========================================================================
   describe('Non-Bash Tool Handling', () => {
-    describe('exit_plan_mode', () => {
+    describe('ExitPlanMode', () => {
       it('should require user approval with long timeout', async () => {
         const input: PermissionRequestInput = {
           session_id: 'test-session',
@@ -374,7 +374,7 @@ describe('Hook Handler', () => {
           cwd: '/tmp/project',
           permission_mode: 'plan',
           hook_event_name: 'PermissionRequest',
-          tool_name: 'exit_plan_mode',
+          tool_name: 'ExitPlanMode',
           tool_input: {},
         };
         const result = await processPermissionRequest(input);

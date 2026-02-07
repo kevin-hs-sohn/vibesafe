@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-description: VibeSafe TDD workflow. Required for implementing security logic.
+description: vibesafu TDD workflow. Required for implementing security logic.
 ---
 
 # TDD for Security Code

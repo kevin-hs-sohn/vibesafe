@@ -1,5 +1,5 @@
 /**
- * Claude Code Hook Types for VibeSafu
+ * Claude Code Hook Types for vibesafu
  */
 
 // Hook Input (stdin)
@@ -56,7 +56,7 @@ export interface SonnetReviewResult {
 }
 
 // Config
-export interface VibeSafuConfig {
+export interface vibesafuConfig {
   anthropic: {
     apiKey: string;
   };

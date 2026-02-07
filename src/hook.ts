@@ -1,5 +1,5 @@
 /**
- * VibeSafu Hook Handler
+ * vibesafu Hook Handler
  * Main entry point for processing PermissionRequest events
  */
 
@@ -19,7 +19,7 @@ import { reviewWithSonnet } from './guard/sonnet-review.js';
 import { getApiKey, readConfig } from './cli/config.js';
 
 /** Timeout in seconds before auto-denying risky commands */
-const TIMEOUT_SECONDS = 3;
+const TIMEOUT_SECONDS = 7;
 
 /** Timeout for plan mode approval (72 hours - user may be away) */
 const PLAN_MODE_TIMEOUT_SECONDS = 72 * 60 * 60;
@@ -113,8 +113,8 @@ export async function processPermissionRequest(
       };
     }
 
-    // 2b: exit_plan_mode - requires user approval (72 hour timeout)
-    if (input.tool_name === 'exit_plan_mode') {
+    // 2b: ExitPlanMode - requires user approval (72 hour timeout)
+    if (input.tool_name === 'ExitPlanMode') {
       return {
         decision: 'needs-review',
         reason: 'Plan mode exit requires user approval',
@@ -268,7 +268,7 @@ export async function processPermissionRequest(
   }
 
   // Progress indicator to stderr (doesn't interfere with JSON output on stdout)
-  process.stderr.write('\x1b[90m[VibeSafu] Assessing security risks...\x1b[0m\n');
+  process.stderr.write('\x1b[90m[vibesafu] Assessing security risks...\x1b[0m\n');
 
   // Step 5a: Haiku triage
   const triage = await triageWithHaiku(anthropicClient, checkpoint);
@@ -290,7 +290,7 @@ export async function processPermissionRequest(
   }
 
   // Step 5b: Escalate to Sonnet for deeper review
-  process.stderr.write('\x1b[90m[VibeSafu] Escalating to deep analysis...\x1b[0m\n');
+  process.stderr.write('\x1b[90m[vibesafu] Escalating to deep analysis...\x1b[0m\n');
   const review = await reviewWithSonnet(anthropicClient, checkpoint, triage);
 
   if (review.verdict === 'BLOCK') {
@@ -402,7 +402,7 @@ export async function runHook(): Promise<void> {
     : `${timeout}s`;
 
   // Still here after timeout = user didn't allow, auto-deny
-  const denyMessage = `🛡️ [VibeSafu] Auto-denied (no response in ${timeoutDisplay})\n\n` +
+  const denyMessage = `🛡️ [vibesafu] Auto-denied (no response in ${timeoutDisplay})\n\n` +
     `Reason: ${warningMessage}\n\n` +
     `If this was intentional, re-run the command and click "Allow".`;
 

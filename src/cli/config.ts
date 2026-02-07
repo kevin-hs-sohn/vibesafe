@@ -1,18 +1,18 @@
 /**
  * CLI Config Command
- * Configure VibeSafu settings (API key, etc.)
+ * Configure vibesafu settings (API key, etc.)
  */
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import type { VibeSafuConfig } from '../types.js';
+import type { vibesafuConfig } from '../types.js';
 
 const CONFIG_DIR = join(homedir(), '.vibesafu');
 const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
 
-const DEFAULT_CONFIG: VibeSafuConfig = {
+const DEFAULT_CONFIG: vibesafuConfig = {
   anthropic: {
     apiKey: '',
   },
@@ -33,9 +33,9 @@ const DEFAULT_CONFIG: VibeSafuConfig = {
 };
 
 /**
- * Read VibeSafu config
+ * Read vibesafu config
  */
-export async function readConfig(): Promise<VibeSafuConfig> {
+export async function readConfig(): Promise<vibesafuConfig> {
   try {
     const content = await readFile(CONFIG_PATH, 'utf-8');
     return { ...DEFAULT_CONFIG, ...JSON.parse(content) };
@@ -45,9 +45,9 @@ export async function readConfig(): Promise<VibeSafuConfig> {
 }
 
 /**
- * Write VibeSafu config
+ * Write vibesafu config
  */
-export async function writeConfig(config: VibeSafuConfig): Promise<void> {
+export async function writeConfig(config: vibesafuConfig): Promise<void> {
   await mkdir(CONFIG_DIR, { recursive: true });
   await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2));
 }
@@ -70,10 +70,10 @@ function prompt(question: string): Promise<string> {
 }
 
 /**
- * Configure VibeSafu
+ * Configure vibesafu
  */
 export async function config(): Promise<void> {
-  console.log('VibeSafu Configuration');
+  console.log('vibesafu Configuration');
   console.log('======================');
   console.log('');
 
