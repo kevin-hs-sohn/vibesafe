@@ -11,22 +11,37 @@
  */
 
 import { parseArgs } from 'node:util';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { install, uninstall } from './cli/install.js';
 import { config } from './cli/config.js';
 import { check } from './cli/check.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
 const COMMANDS = ['install', 'uninstall', 'check', 'config'] as const;
 type Command = (typeof COMMANDS)[number];
 
 async function main(): Promise<void> {
-  const { positionals } = parseArgs({
+  const { positionals, values } = parseArgs({
     allowPositionals: true,
     strict: false,
+    options: {
+      version: { type: 'boolean', short: 'v' },
+      help: { type: 'boolean', short: 'h' },
+    },
   });
+
+  if (values.version) {
+    console.log(pkg.version);
+    return;
+  }
 
   const command = positionals[0] as Command | undefined;
 
-  if (!command || !COMMANDS.includes(command)) {
+  if (values.help || !command || !COMMANDS.includes(command)) {
     console.error('vibesafu - Claude Code Security Guard');
     console.error('');
     console.error(`Usage: vibesafu <${COMMANDS.join('|')}>`);
