@@ -45,10 +45,6 @@ export interface vibesafuConfig {
   };
   /** MCP tools that are pre-approved (e.g., ["mcp__memory__*", "mcp__filesystem__read_file"]) */
   allowedMCPTools: string[];
-  logging: {
-    enabled: boolean;
-    path: string;
-  };
 }
 
 // Pattern Definition
