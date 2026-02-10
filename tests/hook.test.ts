@@ -503,6 +503,42 @@ describe('Hook Handler', () => {
   });
 
   // ==========================================================================
+  // Runtime Input Validation
+  // ==========================================================================
+  describe('Runtime Input Validation', () => {
+    it('should deny Bash tool with non-string command', async () => {
+      const input: PermissionRequestInput = {
+        session_id: 'test-session',
+        transcript_path: '/tmp/transcript',
+        cwd: '/tmp/project',
+        permission_mode: 'default',
+        hook_event_name: 'PermissionRequest',
+        tool_name: 'Bash',
+        tool_input: { command: 123 as unknown as string },
+      };
+      const result = await processPermissionRequest(input);
+
+      expect(result.decision).toBe('deny');
+      expect(result.reason).toContain('command');
+    });
+
+    it('should deny Bash tool with missing command', async () => {
+      const input: PermissionRequestInput = {
+        session_id: 'test-session',
+        transcript_path: '/tmp/transcript',
+        cwd: '/tmp/project',
+        permission_mode: 'default',
+        hook_event_name: 'PermissionRequest',
+        tool_name: 'Bash',
+        tool_input: {},
+      };
+      const result = await processPermissionRequest(input);
+
+      expect(result.decision).toBe('deny');
+    });
+  });
+
+  // ==========================================================================
   // ReDoS Protection for Custom Patterns
   // ==========================================================================
   describe('Custom Pattern ReDoS Protection', () => {

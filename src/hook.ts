@@ -210,7 +210,15 @@ export async function processPermissionRequest(
     };
   }
 
-  const command = input.tool_input.command as string;
+  // Runtime validation: command must be a non-empty string
+  const command = input.tool_input.command;
+  if (typeof command !== 'string' || !command.trim()) {
+    return {
+      decision: 'deny',
+      reason: `Invalid input: Bash tool requires a non-empty string command, got ${typeof command}`,
+      source: 'instant-block',
+    };
+  }
 
   // Step 3: Check custom patterns from user config (allow/block)
 
