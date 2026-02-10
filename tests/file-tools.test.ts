@@ -56,11 +56,6 @@ describe('File Tools Security', () => {
         expect(result.blocked).toBe(true);
       });
 
-      it('should block writing to CLAUDE.md', () => {
-        const result = checkFilePath('/project/CLAUDE.md', 'write');
-        expect(result.blocked).toBe(true);
-      });
-
       it('should block writing with $HOME expansion', () => {
         const result = checkFilePath('$HOME/.ssh/authorized_keys', 'write');
         expect(result.blocked).toBe(true);

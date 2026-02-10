@@ -120,9 +120,6 @@ const WRITE_SENSITIVE_PATHS: SensitivePath[] = [
     legitimateUses: ['Configuring PyPI', 'Publishing packages'] },
 
   // Claude Code config - Critical (could disable security)
-  { pattern: /CLAUDE\.md$/i, description: 'Claude instructions file', severity: 'critical',
-    risk: 'Can modify AI behavior and disable security rules',
-    legitimateUses: ['Updating project instructions', 'Configuring Claude behavior'] },
   { pattern: /^~?\/?\.claude\//i, description: 'Claude config directory', severity: 'critical',
     risk: 'Can modify Claude Code settings and disable security hooks',
     legitimateUses: ['Configuring Claude Code'] },

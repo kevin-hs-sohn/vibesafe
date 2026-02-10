@@ -677,7 +677,6 @@ export const CHECKPOINT_PATTERNS: CheckpointPattern[] = [
   { pattern: /\.ssh/i, type: 'file_sensitive', description: 'SSH directory access' },
   { pattern: /\.aws/i, type: 'file_sensitive', description: 'AWS credentials access' },
   { pattern: /credentials/i, type: 'file_sensitive', description: 'Credentials file access' },
-  { pattern: /CLAUDE\.md/i, type: 'file_sensitive', description: 'CLAUDE.md modification' },
 
   // Sensitive file copy/move (indirect path bypass)
   { pattern: /(cp|mv)\s+.*\.ssh\//i, type: 'file_sensitive', description: 'Copying/moving SSH files' },
