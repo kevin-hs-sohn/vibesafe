@@ -54,17 +54,21 @@ export interface ProcessResult {
  *
  * Flow:
  * 1. File Tools (Write/Edit/Read) → Check sensitive paths
- * 2. Non-Bash tools → Allow (only analyze Bash commands)
- * 3. Instant Allow → Allow safe patterns (e.g., git status) without LLM
- * 4. Instant Block → Deny immediately
- * 5. No Checkpoint → Allow (safe command)
- * 6. Trusted Domain → Allow for network-only (NOT script execution)
- * 7. Checkpoint Triggered → LLM review (Haiku → Sonnet if escalated)
+ * 2. Non-Bash tools → Handle by type (MCP, ExitPlanMode, etc.)
+ * 3. Custom patterns → User-defined allow/block
+ * 4. Instant Allow → Safe patterns (e.g., git status) without LLM
+ * 5. High-Risk patterns → Warn user (reverse shell, data exfil, etc.)
+ * 6. Checkpoint detection → If none triggered, allow
+ * 7. Trusted Domain → Allow for network-only (NOT script execution)
+ * 8. LLM review → Haiku triage → Sonnet if escalated
  */
 export async function processPermissionRequest(
   input: PermissionRequestInput,
   anthropicClient?: Anthropic
 ): Promise<ProcessResult> {
+  // Load config once for the entire request
+  const config = await readConfig();
+
   // Step 1: Check file tools for sensitive path access
   if (input.tool_name === 'Write' || input.tool_name === 'Edit' || input.tool_name === 'Read') {
     const fileCheck = checkFileTool(input.tool_name, input.tool_input);
@@ -127,7 +131,6 @@ export async function processPermissionRequest(
     // 2c: MCP tools - require approval (user may not have installed them)
     if (input.tool_name.startsWith('mcp__')) {
       // Check config.allowedMCPTools for pre-approved MCP tools
-      const config = await readConfig();
       const isAllowed = config.allowedMCPTools.some((pattern) => {
         if (pattern.endsWith('*')) {
           // Wildcard match: "mcp__memory__*" matches "mcp__memory__create_entities"
@@ -173,8 +176,7 @@ export async function processPermissionRequest(
 
   const command = input.tool_input.command as string;
 
-  // Step 3: Check custom patterns from user config
-  const config = await readConfig();
+  // Step 3: Check custom patterns from user config (allow/block)
 
   // 3a: Custom allow patterns (user-defined safe commands)
   for (const pattern of config.customPatterns.allow) {
@@ -207,7 +209,7 @@ export async function processPermissionRequest(
     }
   }
 
-  // Step 4: Check for instant allow patterns (safe commands that skip LLM)
+  // Step 4: Check for instant allow patterns (safe commands, skip LLM)
   const allowResult = checkInstantAllow(command);
   if (allowResult.allowed) {
     return {
@@ -217,7 +219,7 @@ export async function processPermissionRequest(
     };
   }
 
-  // Step 4: Check for high-risk patterns (warn instead of block)
+  // Step 5: Check for high-risk patterns (warn instead of block)
   const highRisk = checkHighRiskPatterns(command);
   if (highRisk.detected) {
     const severityLabel = highRisk.severity === 'critical' ? 'HIGH RISK' : 'CAUTION';
@@ -233,7 +235,7 @@ export async function processPermissionRequest(
     };
   }
 
-  // Step 5: Check if command triggers a checkpoint
+  // Step 6: Check if command triggers a checkpoint
   const checkpoint = detectCheckpoint(command);
   if (!checkpoint) {
     return {
@@ -243,7 +245,7 @@ export async function processPermissionRequest(
     };
   }
 
-  // Step 6: For network operations (not script execution), check trusted domains
+  // Step 7: For network operations (not script execution), check trusted domains
   // SECURITY: script_execution (curl | bash) is NEVER auto-approved, even from trusted domains
   // because anyone can upload malicious scripts to GitHub/npm/etc.
   if (checkpoint.type === 'network') {
@@ -257,7 +259,7 @@ export async function processPermissionRequest(
     }
   }
 
-  // Step 7: LLM review if API key is available
+  // Step 8: LLM review if API key is available
   if (!anthropicClient) {
     return {
       decision: 'needs-review',
@@ -270,8 +272,8 @@ export async function processPermissionRequest(
   // Progress indicator to stderr (doesn't interfere with JSON output on stdout)
   process.stderr.write('\x1b[90m[vibesafu] Assessing security risks...\x1b[0m\n');
 
-  // Step 5a: Haiku triage
-  const triage = await triageWithHaiku(anthropicClient, checkpoint);
+  // Step 8a: Haiku triage
+  const triage = await triageWithHaiku(anthropicClient, checkpoint, config.models.triage);
 
   if (triage.classification === 'BLOCK') {
     return {
@@ -289,9 +291,9 @@ export async function processPermissionRequest(
     };
   }
 
-  // Step 5b: Escalate to Sonnet for deeper review
+  // Step 8b: Escalate to Sonnet for deeper review
   process.stderr.write('\x1b[90m[vibesafu] Escalating to deep analysis...\x1b[0m\n');
-  const review = await reviewWithSonnet(anthropicClient, checkpoint, triage);
+  const review = await reviewWithSonnet(anthropicClient, checkpoint, triage, config.models.review);
 
   if (review.verdict === 'BLOCK') {
     const result: ProcessResult = {

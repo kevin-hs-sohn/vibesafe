@@ -88,10 +88,8 @@ export function sanitizeForPrompt(command: string): string {
     sanitized = sanitized.slice(0, MAX_COMMAND_LENGTH) + '... [truncated]';
   }
 
-  // Replace characters that could break XML-like structure
-  sanitized = sanitized
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  // Break CDATA end sequences to prevent escaping XML CDATA blocks
+  sanitized = sanitized.replace(/]]>/g, ']]&gt;');
 
   // Normalize excessive newlines (potential injection delimiter)
   sanitized = sanitized.replace(/\n{3,}/g, '\n\n');

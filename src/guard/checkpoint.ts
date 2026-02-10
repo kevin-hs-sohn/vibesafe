@@ -4,12 +4,9 @@
 
 import { CHECKPOINT_PATTERNS } from '../config/patterns.js';
 import { containsUrlShortener } from '../config/domains.js';
+import type { SecurityCheckpoint } from '../types.js';
 
-export interface SecurityCheckpoint {
-  type: 'network' | 'package_install' | 'git_operation' | 'file_sensitive' | 'script_execution' | 'env_modification' | 'url_shortener';
-  command: string;
-  description: string;
-}
+export type { SecurityCheckpoint };
 
 /**
  * Detect if a command triggers a security checkpoint

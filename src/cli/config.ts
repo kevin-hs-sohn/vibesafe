@@ -3,7 +3,7 @@
  * Configure vibesafu settings (API key, etc.)
  */
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, chmod } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -33,12 +33,26 @@ const DEFAULT_CONFIG: vibesafuConfig = {
 };
 
 /**
+ * Deep merge user config over defaults (2 levels deep)
+ */
+function mergeConfig(defaults: vibesafuConfig, user: Partial<vibesafuConfig>): vibesafuConfig {
+  return {
+    anthropic: { ...defaults.anthropic, ...user.anthropic },
+    models: { ...defaults.models, ...user.models },
+    trustedDomains: user.trustedDomains ?? defaults.trustedDomains,
+    customPatterns: { ...defaults.customPatterns, ...user.customPatterns },
+    allowedMCPTools: user.allowedMCPTools ?? defaults.allowedMCPTools,
+    logging: { ...defaults.logging, ...user.logging },
+  };
+}
+
+/**
  * Read vibesafu config
  */
 export async function readConfig(): Promise<vibesafuConfig> {
   try {
     const content = await readFile(CONFIG_PATH, 'utf-8');
-    return { ...DEFAULT_CONFIG, ...JSON.parse(content) };
+    return mergeConfig(DEFAULT_CONFIG, JSON.parse(content));
   } catch {
     return DEFAULT_CONFIG;
   }
@@ -50,6 +64,8 @@ export async function readConfig(): Promise<vibesafuConfig> {
 export async function writeConfig(config: vibesafuConfig): Promise<void> {
   await mkdir(CONFIG_DIR, { recursive: true });
   await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2));
+  // Restrict file permissions since config may contain API keys
+  await chmod(CONFIG_PATH, 0o600);
 }
 
 /**

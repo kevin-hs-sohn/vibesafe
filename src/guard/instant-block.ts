@@ -40,16 +40,3 @@ export function checkHighRiskPatterns(command: string): HighRiskResult {
   return { detected: false };
 }
 
-// Legacy function for backwards compatibility
-export function checkInstantBlock(command: string): { blocked: boolean; reason?: string | undefined; patternName?: string | undefined; severity?: 'critical' | 'high' | 'medium' | undefined } {
-  const result = checkHighRiskPatterns(command);
-  if (result.detected) {
-    return {
-      blocked: true,
-      reason: `Matches dangerous pattern - ${result.description}`,
-      patternName: result.patternName,
-      severity: result.severity,
-    };
-  }
-  return { blocked: false };
-}

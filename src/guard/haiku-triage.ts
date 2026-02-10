@@ -27,7 +27,7 @@ export interface TriageResult {
   riskIndicators: string[];
 }
 
-const HAIKU_MODEL = 'claude-haiku-4-20250514';
+const DEFAULT_HAIKU_MODEL = 'claude-haiku-4-20250514';
 const API_TIMEOUT_MS = 30000; // 30 seconds
 
 /**
@@ -89,7 +89,8 @@ const FORCE_ESCALATE_TYPES: SecurityCheckpoint['type'][] = [
  */
 export async function triageWithHaiku(
   client: Anthropic,
-  checkpoint: SecurityCheckpoint
+  checkpoint: SecurityCheckpoint,
+  model?: string
 ): Promise<TriageResult> {
   // SECURITY: Force escalate certain checkpoint types without calling Haiku
   // Package installs and script execution always need Sonnet's deeper analysis
@@ -116,7 +117,7 @@ export async function triageWithHaiku(
 
     const response = await client.messages.create(
       {
-        model: HAIKU_MODEL,
+        model: model ?? DEFAULT_HAIKU_MODEL,
         max_tokens: 500,
         system: TRIAGE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],

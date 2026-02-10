@@ -45,5 +45,3 @@ export function checkTrustedDomains(command: string): TrustedDomainResult {
   };
 }
 
-// Re-export for convenience
-export { isTrustedUrl, extractUrls, isRiskyUrlPattern, containsRiskyUrlPattern } from '../config/domains.js';
