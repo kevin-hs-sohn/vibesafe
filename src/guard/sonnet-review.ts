@@ -25,7 +25,7 @@ export interface ReviewResult {
   userMessage?: string;
 }
 
-const SONNET_MODEL = 'claude-sonnet-4-20250514';
+const DEFAULT_SONNET_MODEL = 'claude-sonnet-4-20250514';
 const API_TIMEOUT_MS = 60000; // 60 seconds for deeper analysis
 
 /**
@@ -112,7 +112,8 @@ BLOCK - Do not allow:
 export async function reviewWithSonnet(
   client: Anthropic,
   checkpoint: SecurityCheckpoint,
-  triage: TriageResult
+  triage: TriageResult,
+  model?: string
 ): Promise<ReviewResult> {
   // Sanitize all inputs
   const sanitizedCommand = sanitizeForPrompt(checkpoint.command);
@@ -131,7 +132,7 @@ export async function reviewWithSonnet(
 
     const response = await client.messages.create(
       {
-        model: SONNET_MODEL,
+        model: model ?? DEFAULT_SONNET_MODEL,
         max_tokens: 1000,
         system: REVIEW_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],

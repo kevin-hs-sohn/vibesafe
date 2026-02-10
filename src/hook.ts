@@ -272,7 +272,7 @@ export async function processPermissionRequest(
   process.stderr.write('\x1b[90m[vibesafu] Assessing security risks...\x1b[0m\n');
 
   // Step 5a: Haiku triage
-  const triage = await triageWithHaiku(anthropicClient, checkpoint);
+  const triage = await triageWithHaiku(anthropicClient, checkpoint, config.models.triage);
 
   if (triage.classification === 'BLOCK') {
     return {
@@ -292,7 +292,7 @@ export async function processPermissionRequest(
 
   // Step 5b: Escalate to Sonnet for deeper review
   process.stderr.write('\x1b[90m[vibesafu] Escalating to deep analysis...\x1b[0m\n');
-  const review = await reviewWithSonnet(anthropicClient, checkpoint, triage);
+  const review = await reviewWithSonnet(anthropicClient, checkpoint, triage, config.models.review);
 
   if (review.verdict === 'BLOCK') {
     const result: ProcessResult = {
