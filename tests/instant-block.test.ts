@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { checkInstantBlock } from '../src/guard/instant-block.js';
+import { checkHighRiskPatterns } from '../src/guard/instant-block.js';
 
-describe('checkInstantBlock', () => {
+/** Thin adapter to keep test assertions concise */
+function checkInstantBlock(command: string) {
+  const result = checkHighRiskPatterns(command);
+  return {
+    blocked: result.detected,
+    reason: result.description,
+  };
+}
+
+describe('checkHighRiskPatterns', () => {
   // ==========================================================================
   // Reverse Shells - Must block
   // ==========================================================================
