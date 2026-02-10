@@ -8,6 +8,7 @@ import type {
   PermissionRequestInput,
   PermissionRequestOutput,
   SecurityCheckpoint,
+  vibesafuConfig,
 } from './types.js';
 import { checkHighRiskPatterns } from './guard/instant-block.js';
 import { checkInstantAllow } from './guard/instant-allow.js';
@@ -16,7 +17,7 @@ import { checkTrustedDomains } from './guard/trusted-domain.js';
 import { checkFileTool } from './guard/file-tools.js';
 import { triageWithHaiku } from './guard/haiku-triage.js';
 import { reviewWithSonnet } from './guard/sonnet-review.js';
-import { getApiKey, readConfig } from './cli/config.js';
+import { readConfig } from './cli/config.js';
 
 /** Timeout in seconds before auto-denying risky commands */
 const TIMEOUT_SECONDS = 7;
@@ -98,10 +99,11 @@ export interface ProcessResult {
  */
 export async function processPermissionRequest(
   input: PermissionRequestInput,
-  anthropicClient?: Anthropic
+  anthropicClient?: Anthropic,
+  preloadedConfig?: vibesafuConfig
 ): Promise<ProcessResult> {
-  // Load config once for the entire request
-  const config = await readConfig();
+  // Use preloaded config or load from disk
+  const config = preloadedConfig ?? await readConfig();
 
   // Step 1: Check file tools for sensitive path access
   if (input.tool_name === 'Write' || input.tool_name === 'Edit' || input.tool_name === 'Read') {
@@ -398,15 +400,18 @@ export async function runHook(): Promise<void> {
     return;
   }
 
-  // Try to get API key and create Anthropic client
+  // Load config once for the entire request lifecycle
+  const config = await readConfig();
+
+  // Get API key from environment or config (no second readConfig call)
   let anthropicClient: Anthropic | undefined;
-  const apiKey = await getApiKey();
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? (config.anthropic.apiKey || undefined);
   if (apiKey) {
     anthropicClient = new Anthropic({ apiKey });
   }
 
-  // Process the request
-  const result = await processPermissionRequest(input, anthropicClient);
+  // Process the request with preloaded config
+  const result = await processPermissionRequest(input, anthropicClient, config);
 
   // Convert result to hook output
   let output: PermissionRequestOutput;
