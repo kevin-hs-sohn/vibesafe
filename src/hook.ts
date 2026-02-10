@@ -65,6 +65,9 @@ export async function processPermissionRequest(
   input: PermissionRequestInput,
   anthropicClient?: Anthropic
 ): Promise<ProcessResult> {
+  // Load config once for the entire request
+  const config = await readConfig();
+
   // Step 1: Check file tools for sensitive path access
   if (input.tool_name === 'Write' || input.tool_name === 'Edit' || input.tool_name === 'Read') {
     const fileCheck = checkFileTool(input.tool_name, input.tool_input);
@@ -127,7 +130,6 @@ export async function processPermissionRequest(
     // 2c: MCP tools - require approval (user may not have installed them)
     if (input.tool_name.startsWith('mcp__')) {
       // Check config.allowedMCPTools for pre-approved MCP tools
-      const config = await readConfig();
       const isAllowed = config.allowedMCPTools.some((pattern) => {
         if (pattern.endsWith('*')) {
           // Wildcard match: "mcp__memory__*" matches "mcp__memory__create_entities"
@@ -174,7 +176,6 @@ export async function processPermissionRequest(
   const command = input.tool_input.command as string;
 
   // Step 3: Check custom patterns from user config
-  const config = await readConfig();
 
   // 3a: Custom allow patterns (user-defined safe commands)
   for (const pattern of config.customPatterns.allow) {
