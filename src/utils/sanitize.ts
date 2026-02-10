@@ -126,8 +126,8 @@ const FORCE_ESCALATE_PATTERNS = [
   /\bsudo\b/i,                        // sudo commands
   /\bsu\b\s+-/i,                      // su commands
   /chmod\s+[0-7]*[7][0-7]*/i,         // chmod with executable permissions
-  /\.env/i,                           // env file access
-  /\/(etc|root|home)\//i,             // System directory access
+  /\.env(\s|$|\.local|\.production|\.development|\.staging|\.test)/i, // .env file access (not .envoy, .environment, etc.)
+  /\/(etc|root)\//i,                  // System directory access (/etc/, /root/ - not /home/ which is too broad)
 ];
 
 /**

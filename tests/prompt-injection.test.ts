@@ -225,7 +225,7 @@ describe('Prompt Injection Defense', () => {
       it('should escalate system directory access', () => {
         expect(shouldForceEscalate('cat /etc/passwd')).toBe(true);
         expect(shouldForceEscalate('ls /root/')).toBe(true);
-        expect(shouldForceEscalate('cat /home/user/.bashrc')).toBe(true);
+        expect(shouldForceEscalate('cat /root/.ssh/id_rsa')).toBe(true);
       });
     });
 
@@ -244,6 +244,30 @@ describe('Prompt Injection Defense', () => {
 
       it('should NOT escalate simple git status', () => {
         expect(shouldForceEscalate('git status')).toBe(false);
+      });
+
+      it('should NOT escalate files with .env-like substrings', () => {
+        expect(shouldForceEscalate('cat my.environment.ts')).toBe(false);
+        expect(shouldForceEscalate('node src/envoy-proxy.js')).toBe(false);
+        expect(shouldForceEscalate('vim .envrc')).toBe(false);
+      });
+
+      it('should NOT escalate normal project paths under /home/', () => {
+        expect(shouldForceEscalate('ls /home/user/project/src')).toBe(false);
+        expect(shouldForceEscalate('cat /home/user/project/README.md')).toBe(false);
+      });
+
+      it('should still escalate actual .env file access', () => {
+        expect(shouldForceEscalate('cat .env')).toBe(true);
+        expect(shouldForceEscalate('echo "KEY=val" >> .env')).toBe(true);
+        expect(shouldForceEscalate('cat .env.local')).toBe(true);
+        expect(shouldForceEscalate('source .env.production')).toBe(true);
+      });
+
+      it('should still escalate sensitive system paths', () => {
+        expect(shouldForceEscalate('cat /etc/passwd')).toBe(true);
+        expect(shouldForceEscalate('cat /etc/shadow')).toBe(true);
+        expect(shouldForceEscalate('ls /root/.ssh/')).toBe(true);
       });
     });
   });
