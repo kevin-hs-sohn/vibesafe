@@ -32,20 +32,22 @@ const PROMPT_INJECTION_PATTERNS = [
   /new\s+instructions?:/i,
   /updated?\s+instructions?:/i,
 
-  // Context/role markers (could be trying to inject fake context)
-  /system\s*:/i,
-  /assistant\s*:/i,
-  /human\s*:/i,
-  /user\s*:/i,
+  // Context/role markers (require injection-like context to avoid false positives)
+  // "system:" alone is too broad (matches "operating system: linux")
+  // Require either line-start or preceded by newline to indicate role-marker usage
+  /^\s*system\s*:/im,
+  /^\s*assistant\s*:/im,
+  /^\s*human\s*:/im,
+  /^\s*user\s*:/im,
   /<\s*system\s*>/i,
   /<\s*\/?\s*instructions?\s*>/i,
 
-  // Emphasis markers often used in injection
-  /\bIMPORTANT\s*:/i,
-  /\bNOTE\s*:/i,
-  /\bWARNING\s*:/i,
-  /\bCRITICAL\s*:/i,
-  /\bURGENT\s*:/i,
+  // Emphasis markers - only flag when combined with directive language
+  /\bIMPORTANT\s*:.*\b(approve|allow|safe|trust|skip|ignore)\b/i,
+  /\bNOTE\s*:.*\b(approve|allow|safe|trust|skip|ignore)\b/i,
+  /\bWARNING\s*:.*\b(approve|allow|safe|trust|skip|ignore)\b/i,
+  /\bCRITICAL\s*:.*\b(approve|allow|safe|trust|skip|ignore)\b/i,
+  /\bURGENT\s*:.*\b(approve|allow|safe|trust|skip|ignore)\b/i,
 
   // Output manipulation
   /respond\s+with\s+(this\s+)?(exact\s+)?json/i,
