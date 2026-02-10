@@ -33,12 +33,26 @@ const DEFAULT_CONFIG: vibesafuConfig = {
 };
 
 /**
+ * Deep merge user config over defaults (2 levels deep)
+ */
+function mergeConfig(defaults: vibesafuConfig, user: Partial<vibesafuConfig>): vibesafuConfig {
+  return {
+    anthropic: { ...defaults.anthropic, ...user.anthropic },
+    models: { ...defaults.models, ...user.models },
+    trustedDomains: user.trustedDomains ?? defaults.trustedDomains,
+    customPatterns: { ...defaults.customPatterns, ...user.customPatterns },
+    allowedMCPTools: user.allowedMCPTools ?? defaults.allowedMCPTools,
+    logging: { ...defaults.logging, ...user.logging },
+  };
+}
+
+/**
  * Read vibesafu config
  */
 export async function readConfig(): Promise<vibesafuConfig> {
   try {
     const content = await readFile(CONFIG_PATH, 'utf-8');
-    return { ...DEFAULT_CONFIG, ...JSON.parse(content) };
+    return mergeConfig(DEFAULT_CONFIG, JSON.parse(content));
   } catch {
     return DEFAULT_CONFIG;
   }
