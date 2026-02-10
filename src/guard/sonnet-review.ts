@@ -13,8 +13,8 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import type { SecurityCheckpoint } from '../types.js';
 import type { TriageResult } from './haiku-triage.js';
-import { extractJsonFromText } from '../utils/sanitize.js';
 import { sanitizeForPrompt, escapeXml } from '../utils/sanitize.js';
+import { callLLM } from '../utils/llm-call.js';
 
 export type ReviewVerdict = 'ALLOW' | 'ASK_USER' | 'BLOCK';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
@@ -126,96 +126,60 @@ export async function reviewWithSonnet(
     .replace('{triage_reason}', escapeXml(triage.reason))
     .replace('{risk_indicators}', escapeXml(triage.riskIndicators.join(', ') || 'none'));
 
-  try {
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const FALLBACK_MSG = 'Automated security review failed. Please review this operation manually.';
 
-    const response = await client.messages.create(
-      {
-        model: model ?? DEFAULT_SONNET_MODEL,
-        max_tokens: 1000,
-        system: REVIEW_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userPrompt }],
-      },
-      { signal: controller.signal }
-    );
+  const result = await callLLM({
+    client,
+    model: model ?? DEFAULT_SONNET_MODEL,
+    systemPrompt: REVIEW_SYSTEM_PROMPT,
+    userPrompt,
+    maxTokens: 1000,
+    timeoutMs: API_TIMEOUT_MS,
+  });
 
-    clearTimeout(timeoutId);
-
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '';
-
-    if (!text) {
-      return {
-        verdict: 'ASK_USER',
-        riskLevel: 'medium',
-        reason: 'Review failed: Empty response from Sonnet',
-        userMessage: 'Automated security review failed. Please review this operation manually.',
-      };
-    }
-
-    // Extract JSON from response using robust parser
-    const extracted = extractJsonFromText(text);
-    if (!extracted) {
-      return {
-        verdict: 'ASK_USER',
-        riskLevel: 'medium',
-        reason: 'Review failed: Could not parse JSON response',
-        userMessage: 'Automated security review failed. Please review this operation manually.',
-      };
-    }
-
-    const parsed = extracted as {
-      verdict?: ReviewVerdict;
-      risk_level?: RiskLevel;
-      analysis?: {
-        intent?: string;
-        risks?: string[];
-        mitigations?: string[];
-      };
-      user_message?: string | null;
-    };
-
-    // Validate verdict
-    const verdict = parsed.verdict ?? 'ASK_USER';
-    if (!['ALLOW', 'ASK_USER', 'BLOCK'].includes(verdict)) {
-      return {
-        verdict: 'ASK_USER',
-        riskLevel: 'medium',
-        reason: 'Review failed: Invalid verdict in response',
-        userMessage: 'Automated security review failed. Please review this operation manually.',
-      };
-    }
-
-    const result: ReviewResult = {
-      verdict,
-      riskLevel: parsed.risk_level ?? 'medium',
-      reason: parsed.analysis?.intent ?? 'Review completed',
-    };
-
-    if (parsed.user_message) {
-      result.userMessage = parsed.user_message;
-    }
-
-    return result;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    // Handle timeout specifically
-    if (errorMessage.includes('abort') || errorMessage.includes('timeout')) {
-      return {
-        verdict: 'ASK_USER',
-        riskLevel: 'medium',
-        reason: 'Review failed: API timeout',
-        userMessage: 'Security review timed out. Please review this operation manually.',
-      };
-    }
-
+  if (!result.ok) {
+    const msg = result.error === 'timeout'
+      ? 'Security review timed out. Please review this operation manually.'
+      : FALLBACK_MSG;
     return {
       verdict: 'ASK_USER',
       riskLevel: 'medium',
-      reason: `Review failed: ${errorMessage}`,
-      userMessage: 'Automated security review failed. Please review this operation manually.',
+      reason: `Review failed: ${result.message}`,
+      userMessage: msg,
     };
   }
+
+  const parsed = result.data as {
+    verdict?: ReviewVerdict;
+    risk_level?: RiskLevel;
+    analysis?: {
+      intent?: string;
+      risks?: string[];
+      mitigations?: string[];
+    };
+    user_message?: string | null;
+  };
+
+  // Validate verdict
+  const verdict = parsed.verdict ?? 'ASK_USER';
+  if (!['ALLOW', 'ASK_USER', 'BLOCK'].includes(verdict)) {
+    return {
+      verdict: 'ASK_USER',
+      riskLevel: 'medium',
+      reason: 'Review failed: Invalid verdict in response',
+      userMessage: FALLBACK_MSG,
+    };
+  }
+
+  const reviewResult: ReviewResult = {
+    verdict,
+    riskLevel: parsed.risk_level ?? 'medium',
+    reason: parsed.analysis?.intent ?? 'Review completed',
+  };
+
+  if (parsed.user_message) {
+    reviewResult.userMessage = parsed.user_message;
+  }
+
+  return reviewResult;
 }

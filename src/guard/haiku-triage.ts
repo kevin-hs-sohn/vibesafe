@@ -13,12 +13,12 @@
 
 import type Anthropic from '@anthropic-ai/sdk';
 import type { SecurityCheckpoint } from '../types.js';
-import { extractJsonFromText } from '../utils/sanitize.js';
 import {
   sanitizeForPrompt,
   shouldForceEscalate,
   escapeXml,
 } from '../utils/sanitize.js';
+import { callLLM } from '../utils/llm-call.js';
 
 export type TriageClassification = 'SELF_HANDLE' | 'ESCALATE' | 'BLOCK';
 
@@ -111,90 +111,53 @@ export async function triageWithHaiku(
     .replace('{checkpoint_type}', escapeXml(checkpoint.type))
     .replace('{context}', escapeXml(checkpoint.description));
 
-  try {
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const result = await callLLM({
+    client,
+    model: model ?? DEFAULT_HAIKU_MODEL,
+    systemPrompt: TRIAGE_SYSTEM_PROMPT,
+    userPrompt,
+    maxTokens: 500,
+    timeoutMs: API_TIMEOUT_MS,
+  });
 
-    const response = await client.messages.create(
-      {
-        model: model ?? DEFAULT_HAIKU_MODEL,
-        max_tokens: 500,
-        system: TRIAGE_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userPrompt }],
-      },
-      { signal: controller.signal }
-    );
-
-    clearTimeout(timeoutId);
-
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '';
-
-    if (!text) {
-      return {
-        classification: 'ESCALATE',
-        reason: 'Triage failed: Empty response from Haiku',
-        riskIndicators: ['triage_error'],
-      };
-    }
-
-    // Extract JSON from response using robust parser
-    const extracted = extractJsonFromText(text);
-    if (!extracted) {
-      return {
-        classification: 'ESCALATE',
-        reason: 'Triage failed: Could not parse JSON response',
-        riskIndicators: ['triage_error'],
-      };
-    }
-
-    const parsed = extracted as {
-      classification?: TriageClassification;
-      reason?: string;
-      risk_indicators?: string[];
-    };
-
-    // Validate classification
-    if (!parsed.classification || !['SELF_HANDLE', 'ESCALATE', 'BLOCK'].includes(parsed.classification)) {
-      return {
-        classification: 'ESCALATE',
-        reason: 'Triage failed: Invalid classification in response',
-        riskIndicators: ['triage_error'],
-      };
-    }
-
-    // SECURITY: Post-response validation
-    // If LLM says SELF_HANDLE but command has risky patterns, force escalate
-    // This is a safety net against prompt injection attacks
-    if (parsed.classification === 'SELF_HANDLE' && shouldForceEscalate(checkpoint.command)) {
-      return {
-        classification: 'ESCALATE',
-        reason: 'Auto-escalated: Command contains patterns requiring deeper review',
-        riskIndicators: ['forced_escalation', ...(parsed.risk_indicators ?? [])],
-      };
-    }
-
-    return {
-      classification: parsed.classification,
-      reason: parsed.reason ?? 'No reason provided',
-      riskIndicators: parsed.risk_indicators ?? [],
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    // Handle timeout specifically
-    if (errorMessage.includes('abort') || errorMessage.includes('timeout')) {
-      return {
-        classification: 'ESCALATE',
-        reason: 'Triage failed: API timeout',
-        riskIndicators: ['triage_timeout'],
-      };
-    }
-
+  if (!result.ok) {
+    const tag = result.error === 'timeout' ? 'triage_timeout' : 'triage_error';
     return {
       classification: 'ESCALATE',
-      reason: `Triage failed: ${errorMessage}`,
+      reason: `Triage failed: ${result.message}`,
+      riskIndicators: [tag],
+    };
+  }
+
+  const parsed = result.data as {
+    classification?: TriageClassification;
+    reason?: string;
+    risk_indicators?: string[];
+  };
+
+  // Validate classification
+  if (!parsed.classification || !['SELF_HANDLE', 'ESCALATE', 'BLOCK'].includes(parsed.classification)) {
+    return {
+      classification: 'ESCALATE',
+      reason: 'Triage failed: Invalid classification in response',
       riskIndicators: ['triage_error'],
     };
   }
+
+  // SECURITY: Post-response validation
+  // If LLM says SELF_HANDLE but command has risky patterns, force escalate
+  // This is a safety net against prompt injection attacks
+  if (parsed.classification === 'SELF_HANDLE' && shouldForceEscalate(checkpoint.command)) {
+    return {
+      classification: 'ESCALATE',
+      reason: 'Auto-escalated: Command contains patterns requiring deeper review',
+      riskIndicators: ['forced_escalation', ...(parsed.risk_indicators ?? [])],
+    };
+  }
+
+  return {
+    classification: parsed.classification,
+    reason: parsed.reason ?? 'No reason provided',
+    riskIndicators: parsed.risk_indicators ?? [],
+  };
 }

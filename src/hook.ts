@@ -38,14 +38,24 @@ const REGEX_TIMEOUT_MS = 50;
  */
 export function safeRegexTest(pattern: string, input: string): boolean {
   try {
-    const regex = new RegExp(pattern, 'i');
-
     // Pre-check: reject patterns with known ReDoS-prone constructs
-    // Nested quantifiers like (a+)+, (a*)+, (a+)*, (a{1,})+
+    // 1. Nested quantifiers: (a+)+, (a*)+, (a+)*, (a{1,})+
     if (/(\(.+[+*]\))[+*]|\(\?:[^)]+[+*]\)[+*]/.test(pattern)) {
       process.stderr.write(`[vibesafu] Warning: Skipping potentially dangerous regex pattern: ${pattern}\n`);
       return false;
     }
+    // 2. Alternation with overlapping branches inside quantified group: (a|a)+, (x|x)*
+    if (/\([^)]*\|[^)]*\)[+*]/.test(pattern)) {
+      process.stderr.write(`[vibesafu] Warning: Skipping potentially dangerous regex pattern: ${pattern}\n`);
+      return false;
+    }
+    // 3. Quantified group containing quantified element with $ anchor: (\s*$)+, (\d+\.)+$
+    if (/\([^)]*[+*][^)]*\)[+*]/.test(pattern)) {
+      process.stderr.write(`[vibesafu] Warning: Skipping potentially dangerous regex pattern: ${pattern}\n`);
+      return false;
+    }
+
+    const regex = new RegExp(pattern, 'i');
 
     // Limit input length to prevent long-running matches
     const testInput = input.length > REGEX_TIMEOUT_MS * 40 ? input.slice(0, REGEX_TIMEOUT_MS * 40) : input;
@@ -210,7 +220,15 @@ export async function processPermissionRequest(
     };
   }
 
-  const command = input.tool_input.command as string;
+  // Runtime validation: command must be a non-empty string
+  const command = input.tool_input.command;
+  if (typeof command !== 'string' || !command.trim()) {
+    return {
+      decision: 'deny',
+      reason: `Invalid input: Bash tool requires a non-empty string command, got ${typeof command}`,
+      source: 'instant-block',
+    };
+  }
 
   // Step 3: Check custom patterns from user config (allow/block)
 

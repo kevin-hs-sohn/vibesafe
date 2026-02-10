@@ -268,4 +268,33 @@ describe('File Tools Security', () => {
       expect(result.blocked).toBe(false);
     });
   });
+
+  // ==========================================================================
+  // Pattern ordering invariant: critical before high
+  // checkFilePath returns the first match, so critical patterns must come
+  // before high patterns to ensure correct severity reporting.
+  // ==========================================================================
+  describe('Severity ordering invariant', () => {
+    it('should match critical severity for ~/.ssh/ directory (not high from .bashrc etc.)', () => {
+      // ~/.ssh/ matches both the SSH directory (critical) and could potentially
+      // match a broader pattern. Ensure critical is returned.
+      const result = checkFilePath('~/.ssh/authorized_keys', 'write');
+      expect(result.severity).toBe('critical');
+    });
+
+    it('should match critical severity for /etc/ paths (not high)', () => {
+      const result = checkFilePath('/etc/shadow', 'write');
+      expect(result.severity).toBe('critical');
+    });
+
+    it('should match critical for SSH private key reads', () => {
+      const result = checkFilePath('~/.ssh/id_rsa', 'read');
+      expect(result.severity).toBe('critical');
+    });
+
+    it('should match critical for /etc/shadow reads', () => {
+      const result = checkFilePath('/etc/shadow', 'read');
+      expect(result.severity).toBe('critical');
+    });
+  });
 });

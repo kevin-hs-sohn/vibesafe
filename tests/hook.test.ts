@@ -503,23 +503,67 @@ describe('Hook Handler', () => {
   });
 
   // ==========================================================================
+  // Runtime Input Validation
+  // ==========================================================================
+  describe('Runtime Input Validation', () => {
+    it('should deny Bash tool with non-string command', async () => {
+      const input: PermissionRequestInput = {
+        session_id: 'test-session',
+        transcript_path: '/tmp/transcript',
+        cwd: '/tmp/project',
+        permission_mode: 'default',
+        hook_event_name: 'PermissionRequest',
+        tool_name: 'Bash',
+        tool_input: { command: 123 as unknown as string },
+      };
+      const result = await processPermissionRequest(input);
+
+      expect(result.decision).toBe('deny');
+      expect(result.reason).toContain('command');
+    });
+
+    it('should deny Bash tool with missing command', async () => {
+      const input: PermissionRequestInput = {
+        session_id: 'test-session',
+        transcript_path: '/tmp/transcript',
+        cwd: '/tmp/project',
+        permission_mode: 'default',
+        hook_event_name: 'PermissionRequest',
+        tool_name: 'Bash',
+        tool_input: {},
+      };
+      const result = await processPermissionRequest(input);
+
+      expect(result.decision).toBe('deny');
+    });
+  });
+
+  // ==========================================================================
   // ReDoS Protection for Custom Patterns
   // ==========================================================================
   describe('Custom Pattern ReDoS Protection', () => {
     it('should not hang on catastrophic backtracking regex in custom allow patterns', async () => {
-      // This test verifies that a ReDoS pattern doesn't freeze the process
-      // The function should complete within a reasonable time even with evil regex
       const { safeRegexTest } = await import('../src/hook.js');
 
       const start = Date.now();
-      // (a+)+b is a classic ReDoS pattern - exponential backtracking on 'aaa...b'
       const result = safeRegexTest('(a+)+$', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaab');
       const elapsed = Date.now() - start;
 
-      // Should complete quickly (< 100ms) rather than hanging for seconds/minutes
       expect(elapsed).toBeLessThan(100);
-      // Should return false (treated as no-match on timeout/error)
       expect(result).toBe(false);
+    });
+
+    it('should reject alternation-based ReDoS patterns like (a|a)+', async () => {
+      const { safeRegexTest } = await import('../src/hook.js');
+
+      expect(safeRegexTest('(a|a)+$', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaab')).toBe(false);
+      expect(safeRegexTest('(\\d+\\.)+$', '1.2.3.4.5.6.7.8.9.0.x')).toBe(false);
+    });
+
+    it('should reject overlapping character class quantifiers', async () => {
+      const { safeRegexTest } = await import('../src/hook.js');
+
+      expect(safeRegexTest('(\\s*$)+', '     x')).toBe(false);
     });
 
     it('should correctly match valid custom patterns', async () => {

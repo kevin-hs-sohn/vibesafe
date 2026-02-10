@@ -1,6 +1,6 @@
 {
   "name": "vibesafu",
-  "version": "0.1.22",
+  "version": "0.1.26",
   "description": "Better Claude Code workflow with smart safety checks. Safe YOLO mode without --dangerously-skip-permission",
   "type": "module",
   "main": "dist/index.js",

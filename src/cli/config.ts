@@ -26,10 +26,6 @@ const DEFAULT_CONFIG: vibesafuConfig = {
     allow: [],
   },
   allowedMCPTools: [],
-  logging: {
-    enabled: true,
-    path: join(CONFIG_DIR, 'logs'),
-  },
 };
 
 /**
@@ -42,7 +38,6 @@ function mergeConfig(defaults: vibesafuConfig, user: Partial<vibesafuConfig>): v
     trustedDomains: user.trustedDomains ?? defaults.trustedDomains,
     customPatterns: { ...defaults.customPatterns, ...user.customPatterns },
     allowedMCPTools: user.allowedMCPTools ?? defaults.allowedMCPTools,
-    logging: { ...defaults.logging, ...user.logging },
   };
 }
 
