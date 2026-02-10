@@ -619,6 +619,19 @@ export const INSTANT_BLOCK_PATTERNS: BlockPattern[] = [
   ...SELF_PROTECTION_PATTERNS,
 ];
 
+// SAFETY: Verify no pattern uses the global (g) flag.
+// RegExp with 'g' flag is stateful: .test() alternates true/false on repeated calls.
+// This would cause intermittent security bypasses - a catastrophic bug for a security tool.
+for (const p of INSTANT_BLOCK_PATTERNS) {
+  if (p.pattern.global) {
+    throw new Error(
+      `Security pattern "${p.name}" must not use the global (g) flag. ` +
+      `The g flag makes RegExp.test() stateful, causing intermittent bypasses. ` +
+      `Remove the g flag from the pattern.`
+    );
+  }
+}
+
 // =============================================================================
 // Checkpoint Patterns - Trigger security review
 // =============================================================================
@@ -683,3 +696,13 @@ export const CHECKPOINT_PATTERNS: CheckpointPattern[] = [
   { pattern: /(cp|mv)\s+.*\.aws\//i, type: 'file_sensitive', description: 'Copying/moving AWS credentials' },
   { pattern: /(cp|mv)\s+.*\.env(\s|$)/i, type: 'file_sensitive', description: 'Copying/moving .env file' },
 ];
+
+for (const p of CHECKPOINT_PATTERNS) {
+  if (p.pattern.global) {
+    throw new Error(
+      `Checkpoint pattern "${p.description}" must not use the global (g) flag. ` +
+      `The g flag makes RegExp.test() stateful, causing intermittent bypasses. ` +
+      `Remove the g flag from the pattern.`
+    );
+  }
+}

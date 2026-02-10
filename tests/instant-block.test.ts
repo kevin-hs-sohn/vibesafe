@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { checkHighRiskPatterns } from '../src/guard/instant-block.js';
+import { INSTANT_BLOCK_PATTERNS, CHECKPOINT_PATTERNS } from '../src/config/patterns.js';
 
 /** Thin adapter to keep test assertions concise */
 function checkInstantBlock(command: string) {
@@ -417,6 +418,23 @@ EOF`;
     it('should handle command with unicode characters', () => {
       const result = checkInstantBlock('echo "unicode test 🚀"');
       expect(result.blocked).toBe(false);
+    });
+  });
+
+  // ==========================================================================
+  // Regex Safety: No g-flag on any pattern
+  // ==========================================================================
+  describe('Regex Safety', () => {
+    it('should not use global flag on any INSTANT_BLOCK_PATTERNS', () => {
+      for (const p of INSTANT_BLOCK_PATTERNS) {
+        expect(p.pattern.global, `Pattern ${p.name} has global flag`).toBe(false);
+      }
+    });
+
+    it('should not use global flag on any CHECKPOINT_PATTERNS', () => {
+      for (const p of CHECKPOINT_PATTERNS) {
+        expect(p.pattern.global, `Pattern type=${p.type} has global flag`).toBe(false);
+      }
     });
   });
 });
